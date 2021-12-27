@@ -2,12 +2,11 @@
 'use strict';
 
 const gulp = require('gulp');
-const log = require('ns-logs');
-const c = require('ansi-colors');
+const {log, colorText, color} = require('ns-logs');
 const configurations = require('../configurations');
 const through = require('through2').obj;
 const path = require('path');
-const shell = require('shelljs');
+const { rmdirSync } = require('fs');
 const _ = require('underscore');
 const crypto = require('crypto');
 const Vinyl = require('vinyl');
@@ -19,7 +18,7 @@ var prepare_deploy_folder = {
 
 	prepareDeployFolder: function prepareDeployFolder(data, cb)
 	{
-		log(c.green('Preparing content to deploy in ' + config.folders.deploy + '...'));
+		log(colorText(color.GREEN, 'Preparing content to deploy in ' + config.folders.deploy + '...'));
 
 		try
 		{
@@ -79,7 +78,7 @@ var prepare_deploy_folder = {
 			{
 				if(data.new_extension)
 				{
-					log(c.yellow('Ignoring the use of --source parameter when creating a new extension. Deploying all the content...'));
+					log(colorText(color.YELLOW, 'Ignoring the use of --source parameter when creating a new extension. Deploying all the content...'));
 					src_paths.push('*');
 				}
 				else
@@ -135,7 +134,7 @@ var prepare_deploy_folder = {
 				src_paths.push('*');
 			}
 
-			shell.rm('-rf', config.folders.deploy + '/*');
+            rmdirSync(config.folders.deploy + '/*', {recursive: true});
 
             const { data: uploadManifest, name: uploadManifestName } = data.uploadManifest;
 
@@ -166,7 +165,7 @@ var prepare_deploy_folder = {
                     this.push(uploadManifestFile);
                     done();
                 }))
-				.pipe(gulp.dest(deploy_path, {mode: '0777'}))
+				.pipe(gulp.dest(deploy_path, { mode: 0o700 }))
 				.on('end', function()
 					{
 						data.new_manifest = new_manifest;

@@ -2,11 +2,11 @@
 const crypto = require('crypto');
 const urlModule = require('url');
 const os = require('os');
-const express = require('express');
+const nsServer = require('ns-server');
 const fs = require('fs');
 const path = require('path');
 const querystring = require('querystring');
-const https = require('https');
+const nsRequest = require('ns-request');
 const { exec } = require('child_process');
 
 const port = '7777';
@@ -57,37 +57,18 @@ class OAuth1 {
         });
 
         const method = options.method || 'GET';
-        const parseResponse = options.parseResponse !== undefined ? options.parseResponse : true;
-
-        let output = '';
 
         if (options.ignoreCert) {
             process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
         }
 
-        return new Promise((resolve, reject) => {
-            const req = https
-                .request(serviceUrl, { headers: options.headers, method: method }, res => {
-                    res.setEncoding('utf8');
+        const requestPromise = nsRequest[method.toLowerCase()](serviceUrl, {
+            headers: options.headers,
+            body: options.data
+        });
 
-                    res.on('data', chunk => {
-                        output += chunk;
-                    });
-
-                    res.on('end', () => {
-                        output = parseResponse ? JSON.parse(output) : output;
-                        resolve(output);
-                    });
-                })
-                .on('error', reject);
-
-            if (['GET', 'DELETE'].indexOf(method) < 0 && options.data) {
-                req.write(options.data || {});
-            }
-            req.end();
-            delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-
-        })
+        delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+        return requestPromise;
     }
 
     async soapAuthorize(tokenName, requestConfig) {
@@ -117,7 +98,15 @@ class OAuth1 {
         const molecule = this.molecule ? `.${this.molecule}` : '';
         const hostName = this.vm && this.vm.replace(/https?:\/\//, '');
 
-        const hostnameStep1 = this.vm ? hostName : `rest${molecule}.netsuite.com`;
+        let hostnameStep1;
+        if (this.vm) {
+            hostnameStep1 = hostName;
+        } else if (this.account) {
+            hostnameStep1 = `${this.account}.restlets.api${molecule}.netsuite.com`;
+        } else {
+            hostnameStep1 = `system${molecule}.netsuite.com`;
+        }
+
         const hostnameStep2 = this.vm || `https://system${molecule}.netsuite.com`;
         const hostnameStep3 = this.vm ? hostName : `.restlets.api${molecule}.netsuite.com`;
 
@@ -137,19 +126,18 @@ class OAuth1 {
     _saveToken(name, content = {}) {
         const tokens = OAuth1.getAllTokens();
         tokens[name] = content;
-        fs.writeFileSync(tokenPath, JSON.stringify(tokens, null, 2), { mode: 0o200 });
+        fs.writeFileSync(tokenPath, JSON.stringify(tokens, null, 2), { mode: 0o700 });
     }
 
     _startLocalServer() {
         const promise = new Promise(resolve => {
-            const app = express();
-            let server;
-            app.use(`/${service}`, (req, res) => {
+            const server = nsServer.createServer();
+            server.use(`/${service}`, (req, res) => {
                 res.sendFile(path.join(__dirname, 'template.html'));
                 resolve(req.query);
                 server.close();
             });
-            server = app.listen(port, '0.0.0.0');
+            server.listen(port, '0.0.0.0');
         });
         return promise;
     }
@@ -282,7 +270,6 @@ class OAuth1 {
             hostname: restMethod,
             method: 'POST',
             headers: {},
-            parseResponse: false,
             ignoreCert: !!this.vm
         };
         request.url = urlModule.format({
@@ -341,6 +328,13 @@ class OAuth1 {
         this.molecule = molecule;
     }
 
+    _setAccount(account) {
+        if (!account) {
+            return;
+        }
+        this.account = account;
+    }
+
     async _step3(account, token, verifier, secret) {
         const params = { account, token, verifier, secret };
         return this._baseStep(`${this.vm ? '' : account}${this.urls.step3}`, params);
@@ -372,6 +366,7 @@ class OAuth1 {
     _initializeConfig(requestConfig) {
         this._setVm(requestConfig.vm);
         this._setMolecule(requestConfig.molecule);
+        this._setAccount(requestConfig.account);
         this._setUrls();
         this._setConsumer(requestConfig.key, requestConfig.secret);
     }

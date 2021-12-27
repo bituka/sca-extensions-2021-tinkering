@@ -1,6 +1,6 @@
 {
-    "type": "SCA",
-    "version": "21.1.4",
+    "type": "SCS",
+    "version": "21.1.1",
     "application": [
         "shopping",
         "myaccount",

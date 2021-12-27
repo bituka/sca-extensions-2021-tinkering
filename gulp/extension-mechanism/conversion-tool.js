@@ -1,7 +1,6 @@
 var fs = require('fs')
 ,	configurations = require('./configurations')
 ,	path = require('path')
-,	shell = require('shelljs')
 ,	_ = require('underscore')
 ,   configs = configurations.getConfigs();
 
@@ -16,7 +15,7 @@ var conversion_tool = {
 		{
 			if(!fs.existsSync(path))
 			{
-				shell.mkdir('-p', path);
+				fs.mkdirSync(path, { recursive: true });
 			}
 		}
 		catch (err)
@@ -38,7 +37,7 @@ var conversion_tool = {
 
 			if(fs.existsSync(extras_path))
 			{
-				shell.rm('-rf', extras_path);
+				fs.rmdirSync(extras_path, { recursive: true});
 			}
 
 			self._createDir(extras_path);
@@ -47,7 +46,7 @@ var conversion_tool = {
 			{
 				if(fs.existsSync(ext_path))
 				{
-					shell.rm('-rf', ext_path);
+					fs.rmdirSync(ext_path, { recursive: true });
 				}
 
 				extensions_path = extensions_path.filter(ext => ext !== ext_path);
@@ -61,7 +60,7 @@ var conversion_tool = {
 			{
 				if(fs.existsSync(root_path))
 				{
-					shell.rm('-rf', root_path);
+					fs.rmdirSync(root_path, { recursive: true });
 				}
 
 				self._createDir(root_path);
@@ -180,7 +179,7 @@ var conversion_tool = {
 			{
 				if(!fs.existsSync(overrides_path))
 				{
-					shell.mkdir('-p', overrides_path);
+					fs.mkdirSync(overrides_path, { recursive: true });
 				}
 			}
 			catch (err)

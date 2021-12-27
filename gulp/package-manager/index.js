@@ -3,10 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 const _ = require('underscore');
-const args = require('yargs').argv;
+const args = require('ns-args').argv();
 const glob = require('glob');
-const log = require('ns-logs');
-const c = require('ansi-colors');
+const { log, color, colorText } = require('ns-logs');
 const xml2js = require('xml2js');
 const through = require('through');
 const override_logger = require('../library/batch-logger')();
@@ -92,10 +91,12 @@ function parseDistroAndModules() {
     if (!distroFolder) {
         throw new Error(`Unknown product ${product}`);
     }
-    console.log(c.red(`Using ${product} distro.`));
+    console.log(colorText(color.RED, `Using ${product} distro.`));
     available_distros = _.keys(available_distros);
     available_distros.length > 1 &&
-        console.log(c.red(`Use --product [${available_distros}] to set another one.`));
+        console.log(
+            colorText(color.RED, `Use --product [${available_distros}] to set another one.`)
+        );
     process.env.PRODUCT = product;
     fs.writeFileSync(
         path.join(process.gulp_init_cwd || process.cwd(), '.nsdeploy'),
@@ -185,8 +186,8 @@ var PackageManager = {
         if (module_exist) {
             error_logger.push(
                 '+- Module ',
-                c.cyan(module_name),
-                ' is defined twice. Please use a different name when overriding.'
+                colorText(color.CYAN, module_name),
+                `is defined twice. Please use a different name when overriding.`
             );
         }
 
@@ -214,32 +215,32 @@ var PackageManager = {
             const override_info = self.getOverrideInfo(original_path);
             if (override_info.isOverriden) {
                 error_logger.push(
-                    '+- ',
-                    c.cyan(path.normalize(original_path)),
-                    ' is overridden more than once. Overridden in modules: ',
-                    c.cyan(override_info.moduleName),
-                    ' and ',
-                    c.cyan(module_name)
+                    `+-`,
+                    colorText(color.CYAN, path.normalize(original_path)),
+                    `is overridden more than once. Overridden in modules: `,
+                    colorText(color.CYAN, override_info.moduleName),
+                    `and`,
+                    colorText(color.CYAN, module_name)
                 );
             }
 
             // check to see if original file exists
             if (!fs.existsSync(original_path)) {
                 error_logger.push(
-                    '+- Source file: ',
-                    c.cyan(original_path),
-                    ' does not exists. Defined in module ',
-                    c.cyan(module_name)
+                    `+- Source file: `,
+                    colorText(color.CYAN, original_path),
+                    `does not exists. Defined in module`,
+                    colorText(color.CYAN, module_name)
                 );
             }
 
             // check to see if override file exists
             if (!fs.existsSync(override_path)) {
                 error_logger.push(
-                    '+- Override file: ',
-                    c.cyan(`Modules${override_path.split('Modules')[1]}`),
-                    ' does not exists. Defined in module ',
-                    c.cyan(module_name)
+                    `+- Override file: `,
+                    colorText(color.CYAN, `Modules${override_path.split('Modules')[1]}`),
+                    `does not exists. Defined in module`,
+                    colorText(color.CYAN, module_name)
                 );
             }
 
@@ -255,9 +256,9 @@ var PackageManager = {
 
             override_logger.push(
                 '+- File: ',
-                c.cyan(shortenModulePath(original_path)),
-                ' overridden with: ',
-                c.cyan(shortenModulePath(override_path))
+                colorText(color.CYAN, shortenModulePath(original_path)),
+                `overridden with:`,
+                colorText(color.CYAN, shortenModulePath(override_path))
             );
         });
     },
@@ -539,7 +540,6 @@ var PackageManager = {
                 cb(err);
                 return;
             }
-
             xml2js.parseString(xml, js2Metadata);
         });
 
@@ -567,12 +567,12 @@ var PackageManager = {
 };
 
 PackageManager.pipeErrorHandler = function(error) {
-    log(c.red('SOURCE CODE ERROR'));
+    log(colorText(color.RED, `SOURCE CODE ERROR`));
     if (_(error).keys().length === 0) {
         log(error);
     } else {
         _(error).each(function(val, key) {
-            log(`${c.red(key)} ${val}`);
+            log(`${colorText(color.RED, key)} ${val}`);
         });
     }
     if (PackageManager.isGulpLocal) {

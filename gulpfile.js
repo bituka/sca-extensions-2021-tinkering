@@ -5,15 +5,13 @@ const fs = require('fs');
 const path = require('path');
 const HelpDisplay = require('./gulp/extension-mechanism/HelpDisplay');
 const gulp = require('gulp');
-const args = require('yargs')
-	.parserConfiguration({ 'dot-notation': true })
-	.option('product', {
-		default: 'gulp',
-		hidden: true
-	});
+const nsArgs = require('ns-args');
+
+nsArgs.addHiddenParam('product', 'gulp');
 const configurations = require('./gulp/extension-mechanism/configurations');
 
 process.gulp_init_cwd = process.env.INIT_CWD || process.cwd();
+process.gulp_dest = process.gulp_init_cwd;
 
 const config = configurations.getConfigs();
 

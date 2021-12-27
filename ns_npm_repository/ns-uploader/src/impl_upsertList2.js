@@ -1,7 +1,6 @@
 const _ = require('underscore');
 const suitetalk = require('suitetalk');
-const async = require('async');
-const util = require('util');
+const async = require('ns-async');
 const Tool = require('./tool');
 
 _(Tool.prototype).extend({
@@ -82,22 +81,22 @@ _(Tool.prototype).extend({
             i++;
         });
 
-		// remove the non desired ones from children and records array:
+        // remove the non desired ones from children and records array:
         let indexDecrement = 0;
         _.each(removeIndexes, function(index) {
-			children.splice(index-indexDecrement,1);
-			records.splice(index-indexDecrement,1);
-			indexDecrement++;
-		});
+            children.splice(index - indexDecrement, 1);
+            records.splice(index - indexDecrement, 1);
+            indexDecrement++;
+        });
 
         if (records.length === 0) {
             return;
-		}
+        }
 
         // console.log('\n  Writing in folder ' + targetFolderId + ':
         // ', _.map(children, function(c){return c.path}).join('",  "'));
 
-		// now we add records of this folder level all together using upsertlist operation
+        // now we add records of this folder level all together using upsertlist operation
         return suitetalk.upsertList({ records: records }).then(function(responseBody) {
             const responses = responseBody.upsertListResponse[0].writeResponseList[0].writeResponse;
 
@@ -107,7 +106,7 @@ _(Tool.prototype).extend({
             //  the remoteManifest variable so the manifest is updated
             //  with the internalIds after upload finished in main
 
-			// check responseBody.fault - example > 100mb
+            // check responseBody.fault - example > 100mb
             if (
                 responseBody.upsertListResponse[0].writeResponseList[0].status[0].$.isSuccess !==
                 'true'
@@ -121,70 +120,81 @@ _(Tool.prototype).extend({
                             .statusDetail[0].code[0]
                     }`
                 );
-			}
+            }
             let i = -1;
-            const eachSeries = util.promisify(async.eachSeries);
-            return eachSeries(records, async function(r) {
-				i++;
+            return new Promise(function(resolve, reject) {
+                async.eachSeries(
+                    records,
+                    function(r, done) {
+                        i++;
+                        const child = children[i];
 
-                const child = children[i];
+                        r.response = responses[i];
 
-				r.response = responses[i];
-
-                if (r.response.status[0].$.isSuccess !== 'true') {
-                    if (child.type === 'file') {
-                        console.log(
-                            `ERROR writing file ${child.path}: ${
-                                r.response.status[0].statusDetail[0].message
-                            }\nCode: ${r.response.status[0].statusDetail[0].code[0]}\nExiting. `
-                        );
-						process.exit(1);
-                    } else {
-                        return self
-                            .getFileNamed(targetFolderId, child.name, false, true)
-                            .then(function(record) {
-							r.response = {baseRef:[record]};
-
-                                const newFolderInternalId2 = record.$.internalId;
-                                return self
-                                    ._addChildren(
-                                        child.children,
-                                        newFolderInternalId2,
-                                        localManifest,
-                                        remoteManifest
-                                    )
-                                    .catch(function(err) {
-                                        console.log(
-                                            '__recursing22222 add_child 22222 error ',
-                                            err,
-                                            err.stack
-                                        );
-                                    });
-						})
-                            .catch(function(err) {
+                        if (r.response.status[0].$.isSuccess !== 'true') {
+                            if (child.type === 'file') {
                                 console.log(
-                                    '\n\nupsertList - getFileNamed error: ',
-                                    err,
-                                    err.stack
+                                    `ERROR writing file ${child.path}: ${
+                                        r.response.status[0].statusDetail[0].message
+                                    }\nCode: ${
+                                        r.response.status[0].statusDetail[0].code[0]
+                                    }\nExiting. `
                                 );
-                            });
-					}
-                } else if (child.type === 'folder') {
-                    const newFolderInternalId = r.response.baseRef[0].$.internalId;
-                    return self
-                        ._addChildren(
-                            child.children,
-                            newFolderInternalId,
-                            localManifest,
-                            remoteManifest
-                        )
-                        .catch(function(err) {
-                            console.log('__recursing add_child error ', err);
-                        });
-				}
+                                process.exit(1);
+                            } else {
+                                return self
+                                    .getFileNamed(targetFolderId, child.name, false, true)
+                                    .then(function(record) {
+                                        r.response = { baseRef: [record] };
+
+                                        const newFolderInternalId2 = record.$.internalId;
+                                        return self
+                                            ._addChildren(
+                                                child.children,
+                                                newFolderInternalId2,
+                                                localManifest,
+                                                remoteManifest
+                                            )
+                                            .then(function() {
+                                                done();
+                                            })
+                                            .catch(function(err) {
+                                                done(err);
+                                            });
+                                    })
+                                    .catch(function(err) {
+                                        done(err);
+                                    });
+                            }
+                        } else if (child.type === 'folder') {
+                            const newFolderInternalId = r.response.baseRef[0].$.internalId;
+                            return self
+                                ._addChildren(
+                                    child.children,
+                                    newFolderInternalId,
+                                    localManifest,
+                                    remoteManifest
+                                )
+                                .then(function() {
+                                    done();
+                                })
+                                .catch(function(err) {
+                                    done(err);
+                                });
+                        } else {
+                            done();
+                        }
+                    },
+                    function(err) {
+                        if (err) {
+                            reject(err);
+                        }
+                        resolve();
+                    }
+                );
             });
-		});
-	}
+        });
+    }
 });
 
 module.exports = Tool;

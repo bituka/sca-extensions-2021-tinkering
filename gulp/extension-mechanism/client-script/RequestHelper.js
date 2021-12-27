@@ -1,6 +1,6 @@
 'use strict';
 
-const rp = require('request-promise');
+const rp = require('ns-request');
 const _ = require('underscore');
 const configs = require('../configurations').getConfigs();
 const url = require('url');
@@ -48,7 +48,7 @@ var RequestHelper = {
     },
 
     getAuthorizationHeader: async function getAuthorizationHeader(requestMethod, credentials) {
-        requestMethod.url = requestMethod.uri;
+        requestMethod.url = requestMethod.path;
         const oauth = new OAuth1(credentials);
         return await oauth.restAuthorize(credentials.authID, requestMethod);
     },
@@ -91,7 +91,7 @@ var RequestHelper = {
         var self = this;
         var credentials = configs.credentials;
 
-        if(!options.uri)
+        if(!options.path)
         {
             options.query = options.query || {};
             options.data = options.data || {};
@@ -109,14 +109,13 @@ var RequestHelper = {
         }
 
         options = !options.retries ? {
-            uri: this.formatUrl(credentials, options.query, options.suitelet)
+            path: this.formatUrl(credentials, options.query, options.suitelet)
             ,	method: options.method
-            ,	json: true
-            ,	body: options.data
+            ,	body: JSON.stringify(options.data)
             ,	timeout: options.timeout * 1000
         } : options;
 
-        var args = require('yargs').argv;
+        var args = require('ns-args').argv();
         if (args.proxy)
         {
             options.proxy = args.proxy;
@@ -135,27 +134,31 @@ var RequestHelper = {
             };
         }
 
-        return rp(options)
-            .then(function(response)
+        return rp[options.method.toLowerCase()](options)
+            .then(function(responseStr)
             {
-                if(
-                    !response ||
-                    !response.header ||
-                    !response.header.status ||
-                    !response.header.status.code ||
-                    response.header.status.code !== 'SUCCESS'
-                )
-                {
-                    var is_msg = response &&
-                        response.header &&
-                        response.header.status &&
-                        response.header.status.message
-                        ,   msg = is_msg ? response.header.status.message : 'Unexpected Error';
+                try {
+                    const response = JSON.parse(responseStr);
+                    if(
+                        !response ||
+                        !response.header ||
+                        !response.header.status ||
+                        !response.header.status.code ||
+                        response.header.status.code !== 'SUCCESS'
+                    )
+                    {
+                        var is_msg = response &&
+                            response.header &&
+                            response.header.status &&
+                            response.header.status.message
+                            ,   msg = is_msg ? response.header.status.message : 'Unexpected Error';
 
-                    return Promise.reject(msg);
+                        return Promise.reject(msg);
+                    }
+                    return response;
+                } catch(err) {
+                    return Promise.reject(err);
                 }
-
-                return response;
             })
             .catch(function(error)
             {

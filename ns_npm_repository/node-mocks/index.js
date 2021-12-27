@@ -1,8 +1,9 @@
 module.exports = {
     mockChild_process: require('./modules/child_processMock'),
     mockCrypto: require('./modules/cryptoMock'),
-    mockExpress: require('./modules/expressMock'),
+    mockNsServer: require('./modules/nsServerMock'),
     mockFs: require('./modules/fsMock'),
+    mockHttp: require('./modules/httpMock'),
     mockHttps: require('./modules/httpsMock'),
     mockOs: require('./modules/osMock'),
     mockPath: require('./modules/pathMock'),

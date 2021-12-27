@@ -1,7 +1,6 @@
 'use strict';
 
-var log = require('ns-logs')
-,	c = require('ansi-colors')
+var {log, colorText, color} = require('ns-logs')
 ,	confiurations = require('./configurations').getConfigs()
 ,	path = require('path')
 ,	_ = require('underscore');
@@ -17,7 +16,7 @@ var skin_record_helper = {
 
 	syncSkinsRecords: function syncSkinsRecords(data, cb)
 	{
-		log(c.green('Synchronizing skin records with your local ' + data.new_manifest.name + ' skins...'));
+		log(colorText(color.GREEN, 'Synchronizing skin records with your local ' + data.new_manifest.name + ' skins...'));
 
 		var modify_skins_data = {
 			skins_to_create: []
@@ -67,7 +66,7 @@ var skin_record_helper = {
 		})
 		.catch(function(error)
 		{
-			log(c.green('Finished synchronizing skin records...'));
+			log(colorText(color.GREEN, 'Finished synchronizing skin records...'));
 			cb(error);
 		});
 	}
@@ -135,7 +134,7 @@ var skin_record_helper = {
 				)
 				.then(function(result)
 				{
-					log(c.green('Skin ' + skin.name + ' updated successfully.'));
+					log(colorText(color.GREEN, 'Skin ' + skin.name + ' updated successfully.'));
 				})
 			);
 		});
@@ -162,7 +161,7 @@ var skin_record_helper = {
 				)
 				.then(function(result)
 				{
-					log(c.green('Skin ' + skin.name + ' created successfully.'));
+					log(colorText(color.GREEN, 'Skin ' + skin.name + ' created successfully.'));
 				})
 			);
 		});
@@ -181,7 +180,7 @@ var skin_record_helper = {
 				SkinServiceClient.deleteSkin(skin.skin_id)
                 .then(function(result)
 				{
-					log(c.green('Skin ' + skin.name + ' was deleted.'));
+					log(colorText(color.GREEN, 'Skin ' + skin.name + ' was deleted.'));
 				})
 			);
 		});

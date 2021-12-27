@@ -1,5 +1,5 @@
 var path = require('path')
-,	shell = require('shelljs')
+,   fs = require('fs')
 ,	_ = require('underscore');
 
 var ModuleGenerator = require('../module/index');
@@ -94,7 +94,7 @@ module.exports = class extends ModuleGenerator {
 
         	var root_ext_path = path.join(this.contextRoot, this.work_folder, this.extension_options.name, 'Modules', this.extension_options.module_name);
 
-        	if(shell.test('-d', root_ext_path))
+        	if(fs.existsSync(root_ext_path))
 			{
 				return this.prompt([
 					{

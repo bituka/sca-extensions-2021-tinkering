@@ -1,7 +1,6 @@
 'use strict';
 
-var log = require('ns-logs')
-,	c = require('ansi-colors')
+var {log, color, colorText} = require('ns-logs')
 ,	path = require('path')
 ,	_ = require('underscore');
 
@@ -72,15 +71,15 @@ var extension_record_helper = {
 
 ,	checkExtensionBundle: function checkExtensionBundle(data, cb)
 	{
-		log(c.green('Checking if ' + data.manifest.name + ' is a published ' + data.manifest.type + '...'));
+		log(colorText(color.GREEN, 'Checking if ' + data.manifest.name + ' is a published ' + data.manifest.type + '...'));
 		extension_record_helper.searchExtensions(data)
 		.then(function(data)
 		{
 			if(data.create_new_record)
 			{
-				log(c.green('No Extension record found for ' +
-						data.manifest.name + ' - ' + data.manifest.version + ' Vendor ' + data.manifest.vendor +
-						'. Preparing to create a new ' + data.manifest.type + '...'));
+                log(colorText(color.GREEN, 'No Extension record found for ' +
+                    data.manifest.name + ' - ' + data.manifest.version + ' Vendor ' + data.manifest.vendor +
+                    '. Preparing to create a new ' + data.manifest.type + '...'));
 			}
 
 			extension_record_helper.getTargets(data)
@@ -118,7 +117,7 @@ var extension_record_helper = {
 				if(extensions.length > 0)
 				{
 					var folder = path.join(data.new_extension.name, data.new_extension.vendor, data.new_extension.version);
-					log(c.yellow('Warning: This deploy will override the content of the extension folder ' + folder + ' and record ' + extensions[0].extension_id));
+					log(colorText(color.YELLOW, 'Warning: This deploy will override the content of the extension folder ' + folder + ' and record ' + extensions[0].extension_id));
 				}
 				cb(null, data);
 			})
@@ -155,13 +154,13 @@ var extension_record_helper = {
 					,	manifest_id: data.manifest_file_id
 					};
 
-					log(c.green('Creating new ' + data.manifest.type + ' record: ' + data.new_manifest.vendor + ' - ' + data.new_manifest.name + ' - ' + data.new_manifest.version));
+					log(colorText(color.GREEN, 'Creating new ' + data.manifest.type + ' record: ' + data.new_manifest.vendor + ' - ' + data.new_manifest.name + ' - ' + data.new_manifest.version));
 
 					promises.push(ExtensionServiceClient.createExtension(new_extension)
 					.then(function(response)
 					{
 						data.deploy_result = response.header.status.code;
-						log(c.green('New ' + data.manifest.type + ' record created successfully with id ' + response.result.extension_id));
+						log(colorText(color.GREEN, 'New ' + data.manifest.type + ' record created successfully with id ' + response.result.extension_id));
 						data.extension_record.extension_id = response.result.extension_id;
 					}));
 					break;
@@ -173,22 +172,22 @@ var extension_record_helper = {
 					var update_extension = {
 						extension_id: data.extension_record.extension_id
 					,	name: data.new_extension.name
-					,	fantasy_name: data.new_manifest.fantasyName
-					,	targets: data.new_manifest.targets
+                    ,	fantasy_name: data.new_manifest.fantasyName
+                    ,	targets: data.new_manifest.targets
                     ,	target_version: data.new_manifest.target_version
-					,	description: data.new_manifest.description
+                    ,	description: data.new_manifest.description
 					,	vendor: data.new_extension.vendor
 					,	version: data.new_extension.version
 					,	manifest_id: data.manifest_file_id
 					};
 
-					log(c.green('Updating ' + data.manifest.type + ' record: ' + data.new_manifest.vendor + ' - ' + data.new_manifest.name + ' - ' + data.new_manifest.version));
+					log(colorText(color.GREEN, 'Updating ' + data.manifest.type + ' record: ' + data.new_manifest.vendor + ' - ' + data.new_manifest.name + ' - ' + data.new_manifest.version));
 
 					promises.push(ExtensionServiceClient.updateExtension(update_extension)
 					.then(function(response)
 					{
 						data.deploy_result = response.header.status.code;
-						log(c.green(data.manifest.type + ' record updated successfully.'));
+						log(colorText(color.GREEN, data.manifest.type + ' record updated successfully.'));
 					}));
 					break;
 				default:

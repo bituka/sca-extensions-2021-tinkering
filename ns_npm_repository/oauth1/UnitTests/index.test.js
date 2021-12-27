@@ -1,9 +1,7 @@
 const {
     mockChild_process,
     mockCrypto,
-    mockExpress,
     mockFs,
-    mockHttps,
     mockOs,
     mockPath,
     mockQuerystring,
@@ -13,10 +11,10 @@ const {
 const fs = require('fs');
 const crypto = require('crypto');
 const url = require('url');
-const https = require('https');
+const nsRequest = require('ns-request');
 const { exec } = require('child_process');
 const queryString = require('querystring');
-const express = require('express');
+const nsServer = require('ns-server');
 
 const OAuth = require('oauth1');
 
@@ -24,9 +22,17 @@ const { OAuth1, openBrowser } = OAuth;
 
 jest.mock('child_process', () => mockChild_process.mock());
 jest.mock('crypto', () => mockCrypto.mock());
-jest.mock('express', () => mockExpress.mock());
+jest.mock('ns-server', () => ({
+    createServer: jest.fn()
+}));
 jest.mock('fs', () => mockFs.mock());
-jest.mock('https', () => mockHttps.mock());
+jest.mock('ns-request', () => {
+    return {
+        post: jest.fn(),
+        get: jest.fn(),
+        defaults: jest.fn()
+    };
+});
 jest.mock('os', () => mockOs.mock());
 jest.mock('path', () => mockPath.mock());
 jest.mock('querystring', () => mockQuerystring.mock());
@@ -102,33 +108,26 @@ describe('OAuth1', () => {
 
     describe('_callService', () => {
         it('should return the response when the request end', async () => {
-            const testResponse = { test: 'value' };
-            jest.spyOn(JSON, 'parse').mockImplementationOnce(() => testResponse);
-            const evMock = jest.fn((name, fn) => ({ on: jest.fn(), setEncoding: jest.fn() }));
+            const testResponse = "{ test: 'value' }";
             url.format.mockReturnValueOnce('http://test.com');
-            https.request.mockImplementationOnce((url, opt, cb) => {
-                const response = evMock();
-                response.on.mockImplementationOnce(() => {});
-                response.on.mockImplementationOnce((name, fn) => {
-                    fn();
-                });
-                cb(response);
-                return response;
-            });
+            const requestPromiseMock = (url, opt, cb = function() {}) => {
+                cb(testResponse);
+                return testResponse;
+            };
+            nsRequest.post.mockImplementationOnce(requestPromiseMock);
+            nsRequest.get.mockImplementationOnce(requestPromiseMock);
 
             const result = await OAuth1._callService({ ignoreCert: true });
             expect(result).toBe(testResponse);
         });
 
         it('should return error if the request fails', async () => {
-            const testError = 'Test Error';
-            https.request.mockImplementationOnce((url, opt, cb) => {
-                return {
-                    on: jest.fn((name, fn) => {
-                        fn(testError);
-                    })
-                };
-            });
+            const testError = new Error('Test Error');
+            const requestPromiseMock = (url, opt, cb) => {
+                throw testError;
+            };
+            nsRequest.post.mockImplementationOnce(requestPromiseMock);
+            nsRequest.get.mockImplementationOnce(requestPromiseMock);
 
             let throwedTestError;
             try {
@@ -367,22 +366,20 @@ describe('OAuth1', () => {
                 return { oauth_token: token, oauth_token_secret: secret };
             });
 
-            express.mockImplementationOnce(() => {
-                return {
-                    use: jest.fn((name, cb) => {
-                        cb(
-                            {
-                                query: {
-                                    company: account,
-                                    oauth_token: oauth_token,
-                                    oauth_verifier: 'oauth_verifier'
-                                }
-                            },
-                            { sendFile: jest.fn() }
-                        );
-                    }),
-                    listen: jest.fn().mockReturnValueOnce(() => ({ close: jest.fn() }))
-                };
+            nsServer.createServer.mockReturnValueOnce({
+                use: jest.fn((name, cb) => {
+                    cb(
+                        {
+                            query: {
+                                company: account,
+                                oauth_token: oauth_token,
+                                oauth_verifier: 'oauth_verifier'
+                            }
+                        },
+                        { sendFile: jest.fn() }
+                    );
+                }),
+                listen: jest.fn().mockReturnValueOnce(() => ({ close: jest.fn() }))
             });
 
             oauth1._getRestAuthHeader = jest.fn(() => {

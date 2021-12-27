@@ -1,0 +1,13 @@
+{
+    "type": "object",
+    "properties": { 
+        "ExternalApi.config": {
+            "group": "extensions",
+            "subtab": "ExternalApi_subtab",
+            "type": "string",
+            "title": "ExternalApi_Title",
+            "description": "Config description example",
+            "default": "Default config example"
+        }
+    }
+}

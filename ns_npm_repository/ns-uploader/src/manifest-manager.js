@@ -3,7 +3,7 @@
 const _ = require('underscore');
 const crypto = require('crypto');
 const fs = require('fs');
-const async = require('async');
+const async = require('ns-async');
 const path = require('path');
 const Tool = require('./tool');
 

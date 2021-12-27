@@ -1,8 +1,7 @@
 'use strict';
 
 var fs = require('fs')
-,	log = require('ns-logs')
-,	c = require('ansi-colors')
+,	{log, colorText, color} = require('ns-logs')
 ,	configs = require('./configurations').getConfigs()
 ,	map = require('map-stream')
 ,	path = require('path')
@@ -138,7 +137,7 @@ module.exports = {
 				{
 					var src_file = path.join(theme_folder, is_dst.src);
 
-					log(c.yellow('Overriding... ') + path.relative(base_path, file.path) + '\n\t\t' + c.yellow('with ') + path.relative(base_path, src_file));
+					log(colorText(color.YELLOW, 'Overriding... ')+ path.relative(base_path, file.path) + '\n\t\t' + colorText(color.YELLOW, 'with ')+ path.relative(base_path, src_file));
 
 					file.contents = Buffer.from(fs.readFileSync(src_file));
 				}

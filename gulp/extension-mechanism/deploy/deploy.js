@@ -1,17 +1,16 @@
 /*jshint esversion: 6 */
 
-var async = require('async')
+var async = require('ns-async')
 ,	fs = require('fs')
-,	log = require('ns-logs')
-,	c = require('ansi-colors')
+,	{log, colorText, color} = require('ns-logs')
 ,	PluginError = require('../CustomError')
 ,	path = require('path')
-,	shell = require('shelljs')
 ,	configs = require('../configurations').getConfigs()
 ,	gulp = require('gulp')
 ,	glob = require('glob').sync
 ,	map = require('map-stream')
 ,	ns = require('../../ns-deploy')
+,   deployHelper = require('./deploy-task-helper')
 ,	_ = require('underscore');
 
 var credentials_inquirer = require('../credentials-inquirer')
@@ -182,7 +181,7 @@ var extension_deployer = {
     {
         const { new_manifest } = data;
 
-        log(c.green('Getting manifest file id for ' + new_manifest.type + '...'));
+        log(colorText(color.GREEN, `Getting manifest file id for ${new_manifest.type} ...`));
 
         const manifestPath = [
             '',
@@ -205,7 +204,7 @@ var extension_deployer = {
 
     updateLocalEnvironment: function updateLocalEnvironment(data, cb)
     {
-        log(c.green('Updating your local environment to continue working with ' + data.new_manifest.name + '/' + data.new_manifest.version));
+        log(colorText(color.GREEN, `Updating your local environment to continue working with ${data.new_manifest.name}/${data.new_manifest.version}`));
 
         fs.writeFileSync(data.manifest_path, JSON.stringify(data.new_manifest, null, 4));
 
@@ -213,8 +212,8 @@ var extension_deployer = {
         {
             var ext_folder = configs.extensionMode ? data.ext_folder : configs.folders.theme_path;
 
-            shell.cp('-rf', ext_folder, path.join(configs.folders.source.source_path, data.new_manifest.name));
-            shell.rm('-rf', ext_folder);
+            deployHelper.copyDir(ext_folder, path.join(configs.folders.source.source_path, data.new_manifest.name));
+            fs.rmdirSync(ext_folder, { recursive: true });
 
             if(configs.extensionMode)
             {
@@ -244,28 +243,29 @@ var extension_deployer = {
         {
             var cct = data.new_manifest.cct[data.new_manifest.cct.length -1];
 
-            log(c.green('Finished deploying your Custom Content Type.'));
-            log(c.green('To see your CCT in the SMT Panel, you will need to:'));
+            log(colorText(color.GREEN, 'Finished deploying your Custom Content Type.'));
+            log(colorText(color.GREEN, 'To see your CCT in the SMT Panel, you will need to:'));
 
             log(
-                c.green('\n\t1- ') + 'Go to Customization -> List,Records & Fields -> Record Types -> New.\n' +
-                c.green('\t2- ') + 'Create a custom record with id ' + c.green(cct.settings_record) + ' with ACCESS TYPE field set to "No permission required".\n' +
-                c.green('\t3- ') + 'Add all the fields your CCT will need.\n' +
-                c.green('\t4- ') + 'Go to Lists -> Website -> CMS Content Type -> New.\n' +
-                c.green('\t5- ') + 'Create a new CMS Content Type with name ' + c.green(cct.registercct_id) + '\n\tand linked it to the custom record you created in the previous steps.\n' +
-                c.green('\t6- ') + 'Set the ICON IMAGE PATH field to the absolute url of the icon deployed in: \n\t"' + deploy_path + '/assets/' + cct.icon + '".\n' +
-                c.green('\t7- ') + 'Activate the extension for your domain as explained below.\n' +
-                c.green('\t8- ') + 'Go to the site, press ESC to go to the SMT Panel, and check that your CCT was added correctly.\n'
+                colorText(color.GREEN, '\n\t1- ') + 'Go to Customization -> List,Records & Fields -> Record Types -> New.\n' +
+                colorText(color.GREEN, '\t2- ')+ 'Create a custom record with id ' + colorText(color.GREEN,cct.settings_record)+ ' with ACCESS TYPE field set to "No permission required".\n' +
+                colorText(color.GREEN, '\t3- ')+ 'Add all the fields your CCT will need.\n' +
+                colorText(color.GREEN, '\t4- ')+ 'Go to Lists -> Website -> CMS Content Type -> New.\n' +
+                colorText(color.GREEN, '\t5- ')+ 'Create a new CMS Content Type with name ' + colorText(color.GREEN, cct.registercct_id)+ '\n\tand linked it to the custom record you created in the previous steps.\n' +
+                colorText(color.GREEN, '\t6- ')+ 'Set the ICON IMAGE PATH field to the absolute url of the icon deployed in: \n\t"' + deploy_path + '/assets/' + cct.icon + '".\n' +
+                colorText(color.GREEN, '\t7- ')+ 'Activate the extension for your domain as explained below.\n' +
+                colorText(color.GREEN, '\t8- ')+ 'Go to the site, press ESC to go to the SMT Panel, and check that your CCT was added correctly.\n'
             );
         }
 
-        log(c.yellow('\n\n                             IMPORTANT NOTE:                             ' +
-            '\n\nThe deploy process is not done until you finished the activation process in the Netsuite ERP.' +
-            '\nGo to system.netsuite.com and open the Extension Management Panel in Setup > SuiteCommerce Advanced > Extension Management.' +
-            '\n\nPlase follow the next steps:' +
-            '\n1- Select Website and domain ' + domain +
-            '\n2- Activate the ' + data.new_manifest.type + ': ' + data.new_manifest.name + ' - ' + data.new_manifest.version + '. Vendor ' + data.new_manifest.vendor + '.'+
-            '\nThank you.'));
+        log(
+            colorText(color.YELLOW, '\n\n                             IMPORTANT NOTE:                             ' +
+                '\n\nThe deploy process is not done until you finished the activation process in the Netsuite ERP.' +
+                '\nGo to system.netsuite.com and open the Extension Management Panel in Setup > SuiteCommerce Advanced > Extension Management.' +
+                '\n\nPlase follow the next steps:' +
+                '\n1- Select Website and domain ' + domain +
+                '\n2- Activate the ' + data.new_manifest.type + ': ' + data.new_manifest.name + ' - ' + data.new_manifest.version + '. Vendor ' + data.new_manifest.vendor + '.'+
+                '\nThank you.'));
         cb(null, data);
     }
 };

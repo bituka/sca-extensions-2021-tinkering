@@ -7,8 +7,7 @@ const config = configurations.getConfigs();
 
 function localMessage(cb)
 {
-	var log = require('ns-logs')
-    ,   c = require('ansi-colors')
+	var {log, color, colorText} = require('ns-logs')
     ,   run_https = config.dbConfig.https
 	,	folders_watching = config.extensionMode ? (config.folders.extensions_path).join(', ') : config.folders.theme_path;
 
@@ -17,12 +16,12 @@ function localMessage(cb)
 		run_https = true;
 	}
 
-	log('+- Local server available at ' + c.cyan((run_https ? 'https': 'http') + '://localhost:' + config.dbConfig.port) + '.');
-	log('+- Watching current folder: '  + c.cyan(folders_watching) + '.');
+	log('+- Local server available at ' + colorText(color.CYAN, (run_https ? 'https': 'http') + '://localhost:' + config.dbConfig.port) + '.');
+	log('+- Watching current folder: '  + colorText(color.CYAN, folders_watching)+ '.');
 
-	log('+- Type ' + c.cyan('gulp') + ' for help on how to use the commands.');
+	log('+- Type ' + colorText(color.CYAN, 'gulp')+ ' for help on how to use the commands.');
 	log('+- Please check your local.ssp applications to start working locally.');
-	log('+- To cancel Gulp Watch enter: ' + c.cyan('control + c') + '.');
+	log('+- To cancel Gulp Watch enter: ' + colorText(color.CYAN, 'control + c')+ '.');
 	cb();
 }
 

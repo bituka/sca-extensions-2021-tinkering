@@ -1,12 +1,9 @@
 /* jshint esversion: 6 */
 const gulp = require('gulp');
-const { bundler } = require('bundler');
-const async = require('async');
+const async = require('ns-async');
 const concat = require('files-concat');
 const fs = require('fs');
 const map = require('map-stream');
-const lazypipe = require('lazypipe');
-const shell = require('shelljs');
 
 const handleBarsCompile = require('handlebars-compile');
 const handlebars = require('handlebars');
@@ -41,7 +38,7 @@ function findTemplateDependencies(content)
 
 var nameLookup = handlebars.JavaScriptCompiler.prototype.nameLookup;
 
-var wrapTemplates = function()
+var wrapTemplates = function(stream)
 {
 	var handleOverrides = _.bind(manifest_manager.handleOverrides, manifest_manager);
 
@@ -64,10 +61,10 @@ var wrapTemplates = function()
 		return handleBarsCompile({handlebars: handlebars});
 	};
 
-	var handlebarsStream = lazypipe()
-		.pipe(handleOverrides)
-		.pipe(compile_templates)
-		.pipe(map, function (file, cb)
+	return stream
+		.pipe(handleOverrides())
+		.pipe(compile_templates())
+		.pipe(map((file, cb) =>
 		{
 			var current_contents = file.contents.toString()
 				,	module_name = path.basename(file.path, '.js');
@@ -85,18 +82,16 @@ var wrapTemplates = function()
 			);
 
 			cb(null, file);
-		});
-
-	return handlebarsStream;
+		}));
 };
 
 function generateLibraryFile(cb)
 {
 	const outputFile = `javascript-libs.js`;
 	const files = [
-			'node_modules/handlebars/dist/handlebars.runtime.js'
-		,	'gulp/extension-mechanism/client-script/Handlebars.CompilerNameLookup.js'
-		];
+		'node_modules/handlebars/dist/handlebars.runtime.js'
+	,	'gulp/extension-mechanism/client-script/Handlebars.CompilerNameLookup.js'
+	];
 
 	gulp.src(files, { allowEmpty: true })
 	.pipe(map(function(file, cb) {
@@ -114,18 +109,12 @@ function generateLibraryFile(cb)
 
 function runTemplates(gulpDone)
 {
-	var condition = function(file)
-	{
-		return path.basename(file.path) !== 'javascript-libs.js';
-	};
-
 	async.each(manifest_manager.getTemplateApplications(), (application, cb)=>
 	{
 		var templates = manifest_manager.getApplicationTemplates(application, true);
-		var stream = wrapTemplates();
 
-		gulp.src(templates, {allowEmpty: true})
-			.pipe(stream()).on('error', gulpDone)
+		wrapTemplates(gulp.src(templates, {allowEmpty: true}))
+			.on('error', gulpDone)
 			.pipe(concat(application + '-templates.js'))
 			.pipe(gulp.dest(configurations.folders.output))
 			.on('end', cb);
@@ -145,10 +134,7 @@ function runTemplatesLocal(gulpDone)
 		var paths = {}
 		,   templates = manifest_manager.getApplicationTemplates(application, true);
 
-		var stream = wrapTemplates();
-
-		gulp.src(templates, {allowEmpty: true})
-			.pipe(stream())
+		wrapTemplates(gulp.src(templates, {allowEmpty: true}))
 			.pipe(map(function(file, cb)
 			{
 				file.path = file.path.replace('.js', '.tpl.js');
@@ -196,8 +182,7 @@ function runTemplatesLocal(gulpDone)
 				);
 
 				console.log(dest_file);
-
-				shell.ShellString(content).to(dest_file);
+				fs.writeFileSync(dest_file, content);
 				cb();
 			});
 	}, function()

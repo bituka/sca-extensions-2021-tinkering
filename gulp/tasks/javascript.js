@@ -1,23 +1,25 @@
 'use strict';
 
 var gulp = require('gulp');
+var fs = require('fs');
+var glob = require('glob');
 
 function clean_js_tmp(cb)
 {
 	var javascript_task = require('../extension-mechanism/local-tasks/javascript')
-	,   shell = require('shelljs')
 	,   path = require('path')
-    ,   configurations = require('../extension-mechanism/configurations').getConfigs()
-	,	del = require('del');
+    ,   configurations = require('../extension-mechanism/configurations').getConfigs();
 
-	if(shell.test('-d', javascript_task.js_destination))
+	if(fs.existsSync(javascript_task.js_destination))
 	{
-		del.sync(path.join(configurations.folders.output, 'extensions', '*_ext.js'), {force: true});
+		glob.sync(path.join(configurations.folders.output, 'extensions', '*_ext.js')).forEach(
+			fs.unlinkSync
+		);
 		cb();
 	}
 	else
 	{
-		shell.mkdir('-p', javascript_task.js_destination);
+		fs.mkdirSync(javascript_task.js_destination, { recursive: true });
 		cb();
 	}
 };

@@ -1,11 +1,9 @@
-var log = require('ns-logs')
-,	c = require('ansi-colors')
+var {log, color, colorText} = require('ns-logs')
 ,	fs = require('fs')
-,	shell = require('shelljs')
 ,	configurations = require('../configurations')
 ,   configs = configurations.getConfigs()
 ,	path = require('path')
-,	args = require('yargs').argv
+,	args = require('ns-args').argv()
 ,	_ = require('underscore')
 ;
 
@@ -55,10 +53,23 @@ function getCompilationTasks()
 		compilation_tasks = ['update-validate'].concat(sources_tasks);
 		compilation_tasks = deploy_config.skip_compilation ? ['update-validate'] : compilation_tasks;
 
-		log(c.green('Deploying only ' + sources.join(',') + '...'));
+		log(colorText(color.GREEN, 'Deploying only ' + sources.join(',') + '...'));
 	}
 
 	return compilation_tasks;
+}
+
+function copyDir(src, dest) {
+    fs.mkdirSync(dest, {recursive: true});
+    const files = fs.readdirSync(src);
+    for(let i = 0; i < files.length; i++) {
+        const current = fs.lstatSync(path.join(src, files[i]));
+        if(current.isDirectory()) {
+            copyDir(path.join(src, files[i]), path.join(dest, files[i]));
+        } else {
+            fs.copyFileSync(path.join(src, files[i]),  path.join(dest, files[i]));
+        }
+    }
 }
 
 // In case the developer has updated the theme name in the manifest,
@@ -83,8 +94,8 @@ function syncThemeFolder() {
 
 			if(config_theme_path !== manifest_theme_path)
 			{
-				shell.cp('-rf', config_theme_path, manifest_theme_path);
-				shell.rm('-rf', config_theme_path);
+				copyDir(config_theme_path, manifest_theme_path);
+				fs.rmdirSync(config_theme_path, { recursive: true });
 				ConversionTool.updateConfigPaths(manifest);
 			}
 		}
@@ -112,8 +123,8 @@ function syncExtensionsFolder() {
 
 				if(configured_ext_path !== manifest_ext_path)
 				{
-					shell.cp('-rf', configured_ext_path, manifest_ext_path);
-					shell.rm('-rf', configured_ext_path);
+					copyDir( configured_ext_path, manifest_ext_path);
+                    fs.rmdirSync(configured_ext_path, { recursive: true });
 					ConversionTool.updateConfigPaths(manifest, {replace: true, replace_path: ext_folder});
 				}
 			});
@@ -124,5 +135,6 @@ function syncExtensionsFolder() {
 module.exports = {
 	getCompilationTasks: getCompilationTasks,
 	syncThemeFolder: syncThemeFolder,
-	syncExtensionsFolder: syncExtensionsFolder
+	syncExtensionsFolder: syncExtensionsFolder,
+	copyDir: copyDir
 };

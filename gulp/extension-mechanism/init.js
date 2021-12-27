@@ -1,9 +1,8 @@
 var path = require('path'),
 fs = require('fs'),
-log = require('ns-logs'),
-c = require('ansi-colors'),
+{log, colorText, color} = require('ns-logs'),
 configurations = require('./configurations'),
-args = require('yargs').argv,
+args = require('ns-args').argv(),
 _ = require('underscore');
 
 var manifest_manager = require('./manifest-manager');
@@ -32,7 +31,7 @@ function registerExtrasExtensions()
                 }
                 catch(error)
                 {
-                    log(c.yellow(ext_path + '/manifest.json does not exist. Ignoring ' + ext_path));
+                    log(colorText(color.YELLOW, ext_path + '/manifest.json does not exist. Ignoring ' + ext_path));
                 }
             }
         });
@@ -62,7 +61,7 @@ function registerWorkspaceExtensions()
             }
             catch(error)
             {
-                log(c.yellow(`${path.join(ext_path, 'manifest.json')} does not exist or is malformed. Ignoring ${ext_path}`));
+                log(colorText(color.YELLOW, `${path.join(ext_path, 'manifest.json')} does not exist or is malformed. Ignoring ${ext_path}`));
             }
         }
     });
@@ -100,12 +99,12 @@ module.exports = function()
             {
                 if(config.extensionMode)
                 {
-                    log(c.red(message + ' "gulp extension:fetch" first.'));
+                    log(colorText(color.RED, message + ' "gulp extension:fetch" first.'));
                     process.exit(1);
                 }
                 else
                 {
-                    log(c.red(message + ' "gulp theme:fetch" first.'));
+                    log(colorText(color.RED, message + ' "gulp theme:fetch" first.'));
                     process.exit(1);
                 }
             }
@@ -118,7 +117,7 @@ module.exports = function()
         var theme_path = config.folders.theme_path;
         if(!theme_path)
         {
-            log(c.yellow('There is no theme_path configured'));
+            log(colorText(color.YELLOW, 'There is no theme_path configured'));
             theme_path = config.extensionMode ? config.folders.source.extras_path : config.folders.source.source_path;
             theme_path = path.join(theme_path, '*', 'manifest.json');
 
@@ -126,7 +125,7 @@ module.exports = function()
             theme_path = glob(theme_path);
             theme_path = theme_path.length ? path.dirname(theme_path[0]) : null;
 
-            theme_path && log(c.yellow(`Looking for a theme in ${theme_path}`));
+            theme_path && log(colorText(color.YELLOW, `Looking for a theme in ${theme_path}`));
             config.folders.theme_path = theme_path;
         }
 
@@ -135,7 +134,7 @@ module.exports = function()
             config.folders.overrides_path = theme_path + '/' + config.folders.overrides;
 
             theme_path = path.join(theme_path, 'manifest.json');
-            log(c.yellow(`Configuring ${theme_path} as theme`));
+            log(colorText(color.YELLOW, `Configuring ${theme_path} as theme`));
             manifest_manager.addManifest(theme_path);
         }
 
@@ -143,7 +142,7 @@ module.exports = function()
         if(!config.folders.theme_path && (!_isSkipCompilation() || !config.extensionMode))
         {
             var task_name = config.extensionMode ? 'extension' : 'theme';
-            log(c.red('You need to run gulp ' + task_name + ':fetch before to get the initial setup files. Aborting. '));
+            log(colorText(color.RED, 'You need to run gulp ' + task_name + ':fetch before to get the initial setup files. Aborting. '));
             process.exit(1);
         }
     }

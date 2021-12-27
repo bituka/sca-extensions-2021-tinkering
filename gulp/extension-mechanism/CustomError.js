@@ -1,4 +1,4 @@
-const color = require('ansi-colors');
+const {colorText, color} = require('ns-logs');
 
 class CustomError extends Error {
   constructor(taskName, error) {
@@ -16,7 +16,7 @@ class CustomError extends Error {
 
   createMessage(){
     const message = `Error Message\n${this.identation + this.message + this.createDetails()}`;
-    return `${color.red('Error')} in task ${color.cyan(this.taskName)}\n${message}`
+    return `${colorText(color.RED, 'Error')} in task ${colorText(color.CYAN, this.taskName)}\n${message}`;
   }
 
   createDetails() {

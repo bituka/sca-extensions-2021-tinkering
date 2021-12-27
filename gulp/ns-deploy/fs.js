@@ -1,13 +1,11 @@
 /* jshint node: true */
 
 const fs = require('fs');
-const log = require('ns-logs');
-const c = require('ansi-colors');
+const {log, color, colorText} = require('ns-logs');
 const _ = require('underscore');
-const mime = require('mime');
+const mime = require('ns-mime');
 const path = require('path');
 const glob = require('glob').sync;
-const shell = require('shelljs');
 
 const archiver = require('../library/archiver');
 
@@ -115,8 +113,9 @@ module.exports = {
     },
 
     processBackup: function(deploy, cb) {
-        log('Starting', c.cyan('Backup sources'));
+        log('Starting', colorText(color.CYAN, 'Backup sources'));
         console.log('Press control + c to cancel');
+        console.log('Processing Backup...');
 
         const { distro } = deploy.info;
         const { distro_path } = deploy.info;
@@ -157,8 +156,8 @@ module.exports = {
             }
             ns_package = ns_package[0];
 
-            let ns_package_json = shell.cat(ns_package);
-            ns_package_json = JSON.parse(ns_package_json).gulp;
+            let ns_package_json = fs.readFileSync(ns_package);
+            ns_package_json = JSON.parse(ns_package_json.toString()).gulp;
 
             _.each(ns_package_json, (globs, resource) => {
                 globs = _.isArray(globs) ? globs : _.keys(globs);

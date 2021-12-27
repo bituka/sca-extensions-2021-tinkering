@@ -7,10 +7,13 @@
 
 var gulp = require('gulp');
 
+function runningLocal(cb) {
+	process.running_local = true;
+	cb();
+}
+
 function getWatchTaskList()
 {
-    process.running_local = true;
-
     const configurations = require('../extension-mechanism/configurations');
 	require('./templates');
 	require('./sass');
@@ -32,7 +35,7 @@ function getWatchTaskList()
 
 }
 
-gulp.task('watch', gulp.series(gulp.parallel(getWatchTaskList()), function do_watch(cb)
+gulp.task('watch', gulp.series(runningLocal, gulp.parallel(getWatchTaskList()), function do_watch(cb)
 {
     var watch_manager = require('../extension-mechanism/watch-manager');
 

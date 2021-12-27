@@ -1,14 +1,14 @@
 const gulp = require('gulp'),
-	yargs = require('yargs'),
+	nsArgs = require('ns-args'),
 	configurations = require('../extension-mechanism/configurations');
 
 require('./update-manifest');
 let config = configurations.getConfigs();
-yargs.option(
-	'preserveManifest', {
-		alias: 'preserve-manifest',
-		describe: '--preserve-manifest Do not automatically update the manifest.json file.'
-	});
+
+// --preserve-manifest Do not automatically update the manifest.json file
+nsArgs.option('preserveManifest', {
+	alias: 'preserve-manifest'
+});
 
 function do_validate(cb)
 {
@@ -17,7 +17,7 @@ function do_validate(cb)
 	return validate_helper.validateManifests(cb);
 }
 
-var validate_dep = yargs.argv['preserve-manifest'] ? [] : [gulp.parallel('update-manifest')];
+var validate_dep = nsArgs.argv()['preserve-manifest'] ? [] : [gulp.parallel('update-manifest')];
 validate_dep.push(do_validate);
 /**
  * Validates the manifest file.

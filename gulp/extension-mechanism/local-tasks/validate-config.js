@@ -5,10 +5,9 @@
 function validateConfigs(manifest, manifest_path, cb)
 {
 	var fs = require('fs')
-	,	log = require('ns-logs')
+	,	{log, color, colorText} = require('ns-logs')
 	,	PluginError = require('../CustomError')
 	,	path = require('path')
-	,	c = require('ansi-colors')
 	,	_ = require('underscore');
 
 	if(manifest.configuration && !_.isEmpty(manifest.configuration.files))
@@ -29,7 +28,7 @@ function validateConfigs(manifest, manifest_path, cb)
 								cb(new PluginError('gulp validate', msg));
 								process.exit(1);
 							} else {
-								log(c.yellow('Warning: ' + msg));
+								log(colorText(color.YELLOW,`Warning ${msg}`));
 							}
 						}
 					});

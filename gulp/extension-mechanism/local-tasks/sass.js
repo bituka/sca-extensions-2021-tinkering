@@ -1,6 +1,6 @@
 var gulp = require('gulp')
-	,	async = require('async')
-	,	args = require('yargs').argv
+	,	async = require('ns-async')
+	,	args = require('ns-args').argv()
 	,	map = require('map-stream')
 	,	path = require('path')
 	,	configs = require('../configurations').getConfigs()
@@ -83,7 +83,7 @@ function generateEntryPoints(cb)
 
 				cb(null, file);
 			}))
-			.pipe(gulp.dest('tmp', {mode: '0777'}))
+			.pipe(gulp.dest('tmp', { mode: 0o700 }))
 			.on('end', cb)
 			.on('error', cb);
 	}

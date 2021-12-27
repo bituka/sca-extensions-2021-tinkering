@@ -4,8 +4,7 @@
 const inquirer = require('inquirer');
 const _ = require('underscore');
 const package_manager = require('../package-manager');
-const log = require('fancy-log');
-const c = require('ansi-colors');
+const {log, color, colorText} = require('ns-logs');
 const { OAuth1 } = require('oauth1');
 
 
@@ -76,7 +75,7 @@ const ui = {
             }));
 
             if (!tokenList.length) {
-                log(c.yellow('Remember to have TOKEN-BASED AUTHENTICATION feature enabled in the target account.'));
+                log(colorText(color.YELLOW, 'Remember to have TOKEN-BASED AUTHENTICATION feature enabled in the target account.'));
             }
 
             inquirer.prompt([{
@@ -200,7 +199,7 @@ const ui = {
 
             inquirer.prompt([promp_config]).then(function(answers) {
                 deploy.info.authID = answers.authID;
-                log(c.magenta('Continue the authentication process in the prompted browser.'));
+                log(colorText(color.MAGENTA, 'Continue the authentication process in the prompted browser.'));
                 cb(null, deploy);
             });
         }

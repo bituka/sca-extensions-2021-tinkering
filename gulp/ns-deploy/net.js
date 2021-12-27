@@ -1,30 +1,27 @@
 /* jshint node: true */
-/*jshint esversion: 8 */
+/* jshint esversion: 8 */
 
-let request = require('request');
-const log = require('fancy-log');
-const c = require('ansi-colors');
+const request = require('ns-request');
+const { log, color, colorText } = require('ns-logs');
 const through = require('through2');
-const Progress = require('progress');
+const Progress = require('ns-progress-bar');
 const path = require('path');
-const { Spinner } = require('cli-spinner');
 const fs = require('fs');
 const url = require('url');
-const args = require('yargs').argv;
+const args = require('ns-args').argv();
 const Uploader = require('ns-uploader');
 const inquirer = require('inquirer');
 const { OAuth1 } = require('oauth1');
 const package_manager = require('../package-manager');
 
 if (args.proxy) {
-    request = request.defaults({ proxy: args.proxy });
+    request.defaults({ proxy: args.proxy });
 }
-const oauth1 = new OAuth1({ molecule: args.m, vm: args.vm, key: args.key, secret: args.secret });
+const oauth1 = new OAuth1({ molecule: args.m, vm: args.vm, key: args.key, secret: args.secret, account: args.account });
 async function getAuthorizationHeader(requestConfig, authID) {
     const autHeader = await oauth1.restAuthorize(authID, requestConfig);
     return autHeader;
 }
-
 
 const net_module = {
     getConfigurationForDomain: async function(deploy, cb) {
@@ -43,82 +40,76 @@ const net_module = {
             }
         });
 
-        const headerAuthorization = await getAuthorizationHeader({ method: 'GET', url: requestUrl }, deploy.info.authID);
+        const headerAuthorization = await getAuthorizationHeader(
+            { method: 'GET', url: requestUrl },
+            deploy.info.authID
+        );
 
-        request.get(
-            requestUrl,
-            {
+        request
+            .get(requestUrl, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: headerAuthorization,
                     'User-Agent': deploy.info.user_agent
                 },
                 rejectUnauthorized: false
-            },
-            function(err, request, response_body) {
-                if (err) {
-                    err.message = 'Error in GET ' + requestUrl + ': ' + err.message;
-                    cb(err);
-                } else {
-                    try {
-                        const response = JSON.parse(response_body);
+            })
+            .then(responseStr => {
+                try {
+                    const response = JSON.parse(responseStr);
 
-                        if (response.error) {
-                            if (typeof response.error !== 'object') {
-                                response.error = JSON.parse(response.error);
-                            }
-                            console.log(
-                                'Error',
-                                response.error.code,
-                                response.error.message
-                                    ? response.error.message
-                                    : response.error.details
-                            );
-                            cb(new Error(response.error.message));
-                        } else if (!response.domainUnmanagedFolder) {
-                            deploy.domainUnmanagedFolderConfigDontExists = true; // so then we know we need to save the folder in the config
-                            inquirer
-                                .prompt([
-                                    {
-                                        type: 'input',
-                                        name: 'domainUnmanagedFolder',
-                                        message:
-                                            'Please, give a name to the folder to deploy your files',
-                                        default: (deploy.info.domain + '').replace(/\./g, '_'),
-                                        validate: function(input) {
-                                            if ((input + '').match(/^[\w\d_]+$/i)) {
-                                                return true;
-                                            }
-                                            return 'Invalid folder name - can only contain ';
-                                        }
-                                    }
-                                ])
-                                .then(function(answers) {
-                                    deploy.info.domainUnmanagedFolder =
-                                        answers.domainUnmanagedFolder;
-                                    cb(null, deploy);
-                                });
-
-                            // TODO: save deploy.info.domainUnmanagedFolder in back in config record
-                        } else {
-                            deploy.info.domainUnmanagedFolder = response.domainUnmanagedFolder;
-                            cb(null, deploy);
+                    if (response.error) {
+                        if (typeof response.error !== 'object') {
+                            response.error = JSON.parse(response.error);
                         }
-                    } catch (e) {
-                        cb(
-                            new Error(
-                                'Error parsing response:\n' +
-                                response_body +
-                                ' - ' +
-                                JSON.stringify(e) +
-                                ' - ' +
-                                e.stack
-                            )
+                        console.log(
+                            'Error',
+                            response.error.code,
+                            response.error.message ? response.error.message : response.error.details
                         );
+                        cb(new Error(response.error.message));
+                    } else if (!response.domainUnmanagedFolder) {
+                        deploy.domainUnmanagedFolderConfigDontExists = true; // so then we know we need to save the folder in the config
+                        inquirer
+                            .prompt([
+                                {
+                                    type: 'input',
+                                    name: 'domainUnmanagedFolder',
+                                    message:
+                                        'Please, give a name to the folder to deploy your files',
+                                    default: `${deploy.info.domain}`.replace(/\./g, '_'),
+                                    validate: function(input) {
+                                        if (`${input}`.match(/^[\w\d_]+$/i)) {
+                                            return true;
+                                        }
+                                        return 'Invalid folder name - can only contain ';
+                                    }
+                                }
+                            ])
+                            .then(function(answers) {
+                                deploy.info.domainUnmanagedFolder = answers.domainUnmanagedFolder;
+                                cb(null, deploy);
+                            });
+
+                        // TODO: save deploy.info.domainUnmanagedFolder in back in config record
+                    } else {
+                        deploy.info.domainUnmanagedFolder = response.domainUnmanagedFolder;
+                        cb(null, deploy);
                     }
+                } catch (e) {
+                    cb(
+                        new Error(
+                            `Error parsing response:\n${responseStr} - ${JSON.stringify(e)} - ${
+                                e.stack
+                            }`
+                        )
+                    );
                 }
-            }
-        );
+            })
+            .catch(err => {
+                err.message = `Error in GET ${requestUrl}: ${err.message}`;
+                cb(err);
+            });
     },
 
     writeConfig: async function(deploy, cb) {
@@ -136,11 +127,13 @@ const net_module = {
                 }
             });
 
-            const headerAuthorization = await getAuthorizationHeader({ method: 'PUT', url: requestUrl }, deploy.info.authID);
+            const headerAuthorization = await getAuthorizationHeader(
+                { method: 'PUT', url: requestUrl },
+                deploy.info.authID
+            );
 
-            request.put(
-                requestUrl,
-                {
+            request
+                .put(requestUrl, {
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: headerAuthorization,
@@ -154,34 +147,28 @@ const net_module = {
                         domain: deploy.info.domain,
                         folderId: deploy.info.target_folder
                     })
-                },
-                function(err, request, response_body) {
-                    if (err) {
-                        err.message = 'Error in GET ' + requestUrl + ': ' + err.message;
-                        cb(err);
-                    } else {
-                        try {
-                            const response = JSON.parse(response_body) || {};
+                })
+                .then(responseStr => {
+                    try {
+                        const response = JSON.parse(responseStr) || {};
 
-                            if (response.error) {
-                                console.log('Error', response.error.code, response.error.message);
-                                cb(new Error(response.error.message));
-                            } else {
-                                cb(null, deploy);
-                            }
-                        } catch (e) {
-                            const errorMsg =
-                                'Error parsing response:\n' +
-                                response_body +
-                                ' - ' +
-                                JSON.stringify(e) +
-                                ' - ' +
-                                e.stack;
-                            cb(new Error(errorMsg));
+                        if (response.error) {
+                            console.log('Error', response.error.code, response.error.message);
+                            cb(new Error(response.error.message));
+                        } else {
+                            cb(null, deploy);
                         }
+                    } catch (e) {
+                        const errorMsg = `Error parsing response:\n${responseStr} - ${JSON.stringify(
+                            e
+                        )} - ${e.stack}`;
+                        cb(new Error(errorMsg));
                     }
-                }
-            );
+                })
+                .catch(err => {
+                    err.message = `Error in GET ${requestUrl}: ${err.message}`;
+                    cb(err);
+                });
         }
     },
 
@@ -198,7 +185,10 @@ const net_module = {
             }
         });
 
-        const headerAuthorization = await getAuthorizationHeader({ method: 'GET', url: requestUrl }, deploy.info.authID);
+        const headerAuthorization = await getAuthorizationHeader(
+            { method: 'GET', url: requestUrl },
+            deploy.info.authID
+        );
 
         request.get(
             requestUrl,
@@ -209,14 +199,10 @@ const net_module = {
                     'User-Agent': deploy.info.user_agent
                 },
                 rejectUnauthorized: false
-            },
-            function(err, request, response_body) {
-                if (err) {
-                    err.message = 'Error in GET ' + requestUrl + ': ' + err.message;
-                    cb(err);
-                } else {
+            }
+                .then(responseStr => {
                     try {
-                        const response = JSON.parse(response_body);
+                        const response = JSON.parse(responseStr);
 
                         if (response.error) {
                             console.log('Error', response.error.code, response.error.message);
@@ -226,10 +212,13 @@ const net_module = {
                             cb(null, deploy);
                         }
                     } catch (e) {
-                        cb(new Error('Error parsing response:\n' + response_body));
+                        cb(new Error(`Error parsing response:\n${responseStr}`));
                     }
-                }
-            }
+                })
+                .catch(err => {
+                    err.message = `Error in GET ${requestUrl}: ${err.message}`;
+                    cb(err);
+                })
         );
     },
 
@@ -248,10 +237,12 @@ const net_module = {
                 }
             });
 
-            const headerAuthorization = await getAuthorizationHeader({ method: 'PUT', url: requestUrl }, deploy.info.authID);
-            request.put(
-                requestUrl,
-                {
+            const headerAuthorization = await getAuthorizationHeader(
+                { method: 'PUT', url: requestUrl },
+                deploy.info.authID
+            );
+            request
+                .put(requestUrl, {
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: headerAuthorization,
@@ -259,11 +250,13 @@ const net_module = {
                     },
                     rejectUnauthorized: false,
                     body: JSON.stringify({ rollback_to: deploy.rollback_revision.file_id })
-                },
-                function() {
+                })
+                .then(() => {
                     cb(null, deploy);
-                }
-            );
+                })
+                .catch(err => {
+                    cb(err);
+                });
         }
     },
 
@@ -284,56 +277,54 @@ const net_module = {
                 }
             });
 
-            const headerAuthorization = await getAuthorizationHeader({ method: 'GET', url: requestUrl }, deploy.info.authID);
+            const headerAuthorization = await getAuthorizationHeader(
+                { method: 'GET', url: requestUrl },
+                deploy.info.authID
+            );
 
-            request.get(
-                requestUrl,
-                {
+            request
+                .get(requestUrl, {
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: headerAuthorization,
                         'User-Agent': deploy.info.user_agent
                     },
                     rejectUnauthorized: false
-                },
-                function(err, request, response_body) {
-                    if (err) {
-                        err.message = 'Error in GET ' + requestUrl + ': ' + err.message;
-                        cb(err);
+                })
+                .then(responseStr => {
+                    const response = JSON.parse(responseStr);
+                    if (response.error) {
+                        cb(new Error(response.error.message));
                     } else {
-                        const response = JSON.parse(response_body);
-                        if (response.error) {
-                            cb(new Error(response.error.message));
-                        } else {
-                            deploy.revisions = response;
-                            cb(null, deploy);
-                        }
+                        deploy.revisions = response;
+                        cb(null, deploy);
                     }
-                }
-            );
+                })
+                .catch(err => {
+                    err.message = `Error in GET ${requestUrl}: ${err.message}`;
+                    cb(err);
+                });
         }
     },
 
     authorize: function(deploy, cb) {
-        oauth1
-            .issueToken(deploy.info.authID)
-            .then(({ account }) => {
-                deploy.info.account = account;
-                if (args.vm) {
-                    deploy.info.hostname = args.vm.replace(/https?:\/\//, '');
-                } else {
-                    const molecule = args.m ? `${args.m}.` : '';
-                    deploy.info.hostname = `${account}.restlets.api.${molecule}netsuite.com`;
-                }
+        oauth1.issueToken(deploy.info.authID).then(({ account }) => {
+            deploy.info.account = account;
+            if (args.vm) {
+                deploy.info.hostname = args.vm.replace(/https?:\/\//, '');
+            } else {
+                const molecule = args.m ? `${args.m}.` : '';
+                deploy.info.hostname = `${account}.restlets.api.${molecule}netsuite.com`;
+            }
 
-                log(
-                    'Using',
-                    `token ${c.magenta(deploy.info.authID)} - Account ${c.magenta(
-                        account
-                    )}, run with --to to change it`
-                );
-                cb(null, deploy);
-            });
+            log(
+                `Using token ${colorText(color.MAGENTA, deploy.info.authID)} - Account ${colorText(
+                    color.MAGENTA,
+                    account
+                )}, run with --to to change it`
+            );
+            cb(null, deploy);
+        });
     },
 
     targetFolder: async function(deploy, cb) {
@@ -352,66 +343,57 @@ const net_module = {
                 }
             });
 
-            const authHeaders = await getAuthorizationHeader({ method: 'GET', url: requestUrl }, deploy.info.authID);
-            request.get(
-                requestUrl,
-                {
+            const authHeaders = await getAuthorizationHeader(
+                { method: 'GET', url: requestUrl },
+                deploy.info.authID
+            );
+            request
+                .get(requestUrl, {
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: authHeaders,
                         'User-Agent': deploy.info.user_agent
                     },
                     rejectUnauthorized: false
-                },
-                function(err, request, response_body) {
-                    if (err) {
-                        err.message = 'Error in GET ' + requestUrl + ': ' + err.message;
-                        cb(err);
-                    } else {
-                        const invalid_scriptlet_id_msg =
-                            'Please make sure the selected account/molecule have the "' +
-                            deploy.options.distroName +
-                            '" bundle installed.';
-                        try {
-                            const response = JSON.parse(response_body);
+                })
+                .then(responseStr => {
+                    const invalid_scriptlet_id_msg = `Please make sure the selected account/molecule have the "${
+                        deploy.options.distroName
+                    }" bundle installed.`;
+                    try {
+                        const response = JSON.parse(responseStr);
 
-                            if (response.error) {
-                                if (response.error.code === 'SSS_INVALID_SCRIPTLET_ID') {
-                                    console.log(
-                                        'Error: Deployment scriptlet not found, aborting. \n' +
-                                        invalid_scriptlet_id_msg
-                                    );
-                                    process.exit(1);
-                                } else {
-                                    console.log(
-                                        'Error',
-                                        response.error.code,
-                                        response.error.message
-                                    );
-                                    if (response.error.code === 'USER_ERROR') {
-                                        console.log(
-                                            'Please check you are pointing to the right molecule/datacenter using the -m argument.'
-                                        );
-                                    }
-                                    cb(new Error(response.error.message));
-                                }
+                        if (response.error) {
+                            if (response.error.code === 'SSS_INVALID_SCRIPTLET_ID') {
+                                console.log(
+                                    `Error: Deployment scriptlet not found, aborting. \n${invalid_scriptlet_id_msg}`
+                                );
+                                process.exit(1);
                             } else {
-                                deploy.target_folders = response;
-                                cb(null, deploy);
+                                console.log('Error', response.error.code, response.error.message);
+                                if (response.error.code === 'USER_ERROR') {
+                                    console.log(
+                                        'Please check you are pointing to the right molecule/datacenter using the -m argument.'
+                                    );
+                                }
+                                cb(new Error(response.error.message));
                             }
-                        } catch (e) {
-                            cb(
-                                new Error(
-                                    'Error parsing response:\n' +
-                                    response_body +
-                                    '\n\n' +
-                                    invalid_scriptlet_id_msg
-                                )
-                            );
+                        } else {
+                            deploy.target_folders = response;
+                            cb(null, deploy);
                         }
+                    } catch (e) {
+                        cb(
+                            new Error(
+                                `Error parsing response:\n${responseStr}\n\n${invalid_scriptlet_id_msg}`
+                            )
+                        );
                     }
-                }
-            );
+                })
+                .catch(err => {
+                    err.message = `Error in GET ${requestUrl}: ${err.message}`;
+                    cb(err);
+                });
         }
     },
 
@@ -442,8 +424,6 @@ const net_module = {
     },
 
     uploadBackup: function(deploy, cb) {
-        const spinner = new Spinner('Uploading backup');
-        spinner.start();
         net_module.uploader
             .mkdir(deploy.info.target_folder, 'backup')
             .then(function(recordRef) {
@@ -452,7 +432,6 @@ const net_module = {
                     '_Sources'
                 );
                 if (!fs.existsSync(sourceFolderPath)) {
-                    spinner.stop();
                     cb(null, deploy);
                     return;
                 }
@@ -463,7 +442,6 @@ const net_module = {
                         sourceFolderPath: sourceFolderPath
                     })
                     .then(function() {
-                        spinner.stop();
                         cb(null, deploy);
                     })
                     .catch(function(err) {
@@ -513,42 +491,40 @@ const net_module = {
             }
         });
 
-        getAuthorizationHeader({ method: 'GET', url: requestUrl }, deploy.info.authID).then(function(authHeader){
-            request.get(
-                requestUrl,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: authHeader,
-                        'User-Agent': deploy.info.user_agent
-                    },
-                    rejectUnauthorized: false
-                },
-                function(err, request, response_body) {
-                    try {
-                        if (err) {
-                            return cb(new Error('Response error: ' + err), deploy);
+        getAuthorizationHeader({ method: 'GET', url: requestUrl }, deploy.info.authID).then(
+            function(authHeader) {
+                request
+                    .get(requestUrl, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: authHeader,
+                            'User-Agent': deploy.info.user_agent
+                        },
+                        rejectUnauthorized: false
+                    })
+                    .then(responseStr => {
+                        try {
+                            deploy.uploadManifest = {
+                                name: manifestName,
+                                data: JSON.parse(responseStr)
+                            };
+                            cb(null, deploy);
+                        } catch (e) {
+                            cb(
+                                new Error(
+                                    `Error parsing response:\n${responseStr}\n\n` +
+                                        `Please make sure that:\n` +
+                                        `- You uploaded all files in RestLet folder to a location in your account.\n` +
+                                        `- You have a restlet script pointing to sca_deployer.js with id customscript_sca_deployer and deployment with id customdeploy_sca_deployer\n` +
+                                        `- You have set the get, post, put, delete methods to _get, _post, _put, _delete respectively in the script.\n` +
+                                        `- You have added the Deployment.js and FileCabinet.js scripts to the script libraries.`
+                                )
+                            );
                         }
-
-                        deploy.uploadManifest = { name: manifestName, data: JSON.parse(response_body) };
-                        cb(null, deploy);
-                    } catch (e) {
-                        cb(
-                            new Error(
-                                'Error parsing response:\n' +
-                                response_body +
-                                '\n\n' +
-                                'Please make sure that:\n' +
-                                '- You uploaded all files in RestLet folder to a location in your account.\n' +
-                                '- You have a restlet script pointing to sca_deployer.js with id customscript_sca_deployer and deployment with id customdeploy_sca_deployer\n' +
-                                '- You have set the get, post, put, delete methods to _get, _post, _put, _delete respectively in the script.\n' +
-                                '- You have added the Deployment.js and FileCabinet.js scripts to the script libraries.'
-                            )
-                        );
-                    }
-                }
-            );
-        });
+                    })
+                    .catch(err => cb(new Error(`Response error: ${err}`), deploy));
+            }
+        );
     },
 
     postFiles: function(deploy, cb) {
@@ -561,16 +537,15 @@ const net_module = {
                 return cb(err);
             }
 
-            const spinner = new Spinner('Processing');
-            const bar = new Progress(`Uploading Chunk ${options.chunksNumber}/${options.chunksTotal} [:bar] :percent`, {
-                complete: '=',
-                incomplete: ' ',
-                width: 50,
-                total: stat.size,
-                callback: function() {
-                    spinner.start();
+            const bar = new Progress(
+                `Uploading Chunk ${options.chunksNumber}/${options.chunksTotal} [:bar] :percent`,
+                {
+                    complete: '=',
+                    incomplete: ' ',
+                    width: 50,
+                    total: stat.size
                 }
-            });
+            );
 
             const requestUrl = url.format({
                 protocol: 'https',
@@ -581,8 +556,12 @@ const net_module = {
                     deploy: deploy.info.deploy
                 }
             });
-            const authHeader = await getAuthorizationHeader({ method: 'POST', url: requestUrl }, deploy.info.authID);
+            const authHeader = await getAuthorizationHeader(
+                { method: 'POST', url: requestUrl },
+                deploy.info.authID
+            );
 
+            const body = [];
             fs.createReadStream(payload_path)
                 .pipe(
                     through(function(buff, type, cb2) {
@@ -591,22 +570,21 @@ const net_module = {
                         return cb2();
                     })
                 )
-                .pipe(
-                    request.post(
-                        requestUrl,
-                        {
+                .on('data', function(data) {
+                    body.push(data);
+                })
+                .on('end', function() {
+                    request
+                        .post(requestUrl, {
+                            body: Buffer.concat(body),
                             headers: {
                                 'Content-Type': 'application/json',
                                 Authorization: authHeader
                             },
                             rejectUnauthorized: false
-                        },
-                        function(err, request, response_body) {
+                        })
+                        .then(responseStr => {
                             try {
-                                if (typeof spinner !== 'undefined') {
-                                    spinner.stop();
-                                }
-
                                 if (typeof process.stdout.clearLine === 'function') {
                                     process.stdout.clearLine();
                                 }
@@ -615,34 +593,28 @@ const net_module = {
                                     process.stdout.cursorTo(0);
                                 }
 
-                                if (err) {
-                                    cb(new Error('Response error: ' + err), deploy);
-                                } else {
-                                    const result = JSON.parse(response_body);
-                                    let took = (new Date().getTime() - t0) / 1000 / 60 + '';
+                                const result = JSON.parse(responseStr);
+                                let took = `${(new Date().getTime() - t0) / 1000 / 60}`;
 
-                                    took = took.substring(0, Math.min(4, took.length)) + ' minutes';
+                                took = `${took.substring(0, Math.min(4, took.length))} minutes`;
 
-                                    deploy.result = result;
-                                    cb(null, deploy);
-                                }
+                                deploy.result = result;
+                                cb(null, deploy);
                             } catch (e) {
                                 cb(
                                     new Error(
-                                        'Error parsing response:\n' +
-                                        response_body +
-                                        '\n\n' +
-                                        'Please make sure that:\n' +
-                                        '- You uploaded all files in RestLet folder to a location in your account.\n' +
-                                        '- You have a restlet script pointing to sca_deployer.js with id customscript_sca_deployer and deployment with id customdeploy_sca_deployer\n' +
-                                        '- You have set the get, post, put, delete methods to _get, _post, _put, _delete respectively in the script.\n' +
-                                        '- You have added the Deployment.js and FileCabinet.js scripts to the script libraries.'
+                                        `Error parsing response:\n${responseStr}\n\n` +
+                                            `Please make sure that:\n` +
+                                            `- You uploaded all files in RestLet folder to a location in your account.\n` +
+                                            `- You have a restlet script pointing to sca_deployer.js with id customscript_sca_deployer and deployment with id customdeploy_sca_deployer\n` +
+                                            `- You have set the get, post, put, delete methods to _get, _post, _put, _delete respectively in the script.\n` +
+                                            `- You have added the Deployment.js and FileCabinet.js scripts to the script libraries.`
                                     )
                                 );
                             }
-                        }
-                    )
-                );
+                        })
+                        .catch(err => cb(new Error(`Response error: ${err}`), deploy));
+                });
         });
     }
 };

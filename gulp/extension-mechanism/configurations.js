@@ -1,16 +1,29 @@
 /* jshint esversion: 6 */
 const fs = require('fs');
 const _ = require('underscore');
-const args = require('yargs');
+const args = require('ns-args').argv();
 
 let configs;
 const configsPath = 'gulp/config/config.json';
 const nsdeployPath = '.nsdeploy';
 
+function extend (source, target) {
+    if (typeof source === 'object' && typeof target === 'object') {
+        Object.keys(source).forEach((sourceKey) => {
+            const sourceObj = source[sourceKey];
+            if (sourceKey in target) {
+                extend(target[sourceKey], sourceObj);
+            } else {
+                target[sourceKey] = sourceObj
+            }
+        });
+    }
+    return target;
+};
+
 function getConfigs() {
     if (configs) {
-        const deep = (confs, args)=>_.isObject(confs) && _.isObject(args) ? _.extend(confs, args, deep) : args;
-        return _.extend(configs, args.argv, deep);
+        return extend(configs, args);
     }
 
     const jsonConfig = fs.existsSync(configsPath)
@@ -21,7 +34,7 @@ function getConfigs() {
         : {};
 
 
-    if (args.argv.to) {
+    if (args.to) {
         jsonConfig.credentials = {};
         nsdeploy.credentials = {};
     }

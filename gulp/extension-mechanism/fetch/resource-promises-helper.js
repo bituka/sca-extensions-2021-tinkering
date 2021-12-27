@@ -1,7 +1,6 @@
 'use strict';
 
-var log = require('ns-logs')
-,	c = require('ansi-colors')
+var {log, colorText, color} = require('ns-logs')
 ,	configs = require('../configurations').getConfigs()
 ,	_ = require('underscore')
 ;
@@ -26,7 +25,7 @@ var resource_promises_helper = {
             });
 
             ConversionTool.extensionToModules(options.manifest, files);
-            log(c.green(options.message_finished));
+            log(colorText(color.GREEN, options.message_finished));
         });
 	}
 
@@ -52,7 +51,7 @@ var resource_promises_helper = {
 					});
 
 					ConversionTool.extensionToModules(options.manifest, result.files);
-					log(c.green('Finished downloading ' + options.resource + ' for ' + result.application + ' of '+ options.manifest.type + ': ' +  options.manifest.name + '...'));
+					log(colorText(color.GREEN, 'Finished downloading ' + options.resource + ' for ' + result.application + ' of '+ options.manifest.type + ': ' +  options.manifest.name + '...'));
 				})
 			);
 		});
@@ -78,7 +77,7 @@ var resource_promises_helper = {
 				});
 
 				ConversionTool.extensionToModules(options.manifest, files);
-				log(c.green(options.message_finished));
+				log(colorText(color.GREEN, options.message_finished));
 			});
 	}
 
@@ -122,7 +121,7 @@ var resource_promises_helper = {
             }
 
             ConversionTool.extensionToModules(options.manifest, files);
-            log(c.green(options.message_finished));
+            log(colorText(color.GREEN, options.message_finished));
         });
 	}
 };

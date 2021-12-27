@@ -1,57 +1,68 @@
 /*jshint esversion: 6 */
 
 const gulp = require('gulp'),
-	yargs = require('yargs'),
+	nsArgs = require('ns-args'),
 	configurations = require('../extension-mechanism/configurations');
 
-yargs.option(
-	    'ask_credentials', {
-	      alias: 'to',
-	      describe: 'Retrieve credentials and application data again ignoring .nsdeploy file and application downloaded files'
-	    })
-.option('credentials.vm', {
-		alias: ['vm', 'credentials:vm'],
-		describe: 'Virtual Machine'
-})
-.option('credentials.molecule', {
-		alias: ['m', 'credentials:molecule'],
-		describe: 'Molecule'
-})
-.option('credentials.nsVersion', {
-		alias: ['nsVersion', 'credentials:nsVersion'],
-		describe: 'Version'
-})
-.option('credentials.roleId', {
-		alias: ['role', 'credentials:roleId'],
-		describe: 'Role Id'
-})
-.option('credentials.website', {
-		alias: ['website', 'credentials:website'],
-		describe: 'Website'
-})
-.option('credentials.applicationId', {
-		alias: ['applicationId', 'credentials:applicationId'],
-		describe: 'Application Id'
-})
-.option('credentials.domain', {
-		alias: ['domain', 'credentials:domain'],
-		describe: 'Domain name (www.name.com)'
-})
-.option('script.web_service', {
-		alias: ['web-script', 'script:web_service'],
-		describe: 'Reslet Script Id of the Extension Mechanism web service'
-})
-.option('script.file_service', {
-		alias: ['file-script', 'script:file_service'],
-		describe: 'Reslet Script Id of the Extension Mechanism file service'
-})
-.option('deploy.web_service', {
-	alias: ['web-deploy', 'deploy:web_service'],
-		describe: 'Reslet Script Deploy of the Extension Mechanism web service'
-})
-.option('fetchConfig.extension', {
-		alias: ['fetch', 'fetchConfig:extension'],
-		describe: 'If you want to start working on an extension you had previously in the file cabinet. Format: '
+// declare all possible command line arguments
+// Retrieve credentials and application data again ignoring .nsdeploy file and application downloaded files
+nsArgs.option( 'ask_credentials', {
+	alias: 'to'
+});
+
+// Virtual Machine
+nsArgs.option('credentials.vm', {
+	alias: ['vm', 'credentials:vm']
+});
+
+// Molecule
+nsArgs.option('credentials.molecule', {
+	alias: ['m', 'credentials:molecule']
+});
+
+//	Version
+nsArgs.option('credentials.nsVersion', {
+	alias: ['nsVersion', 'credentials:nsVersion']
+});
+
+//	Role Id
+nsArgs.option('credentials.roleId', {
+	alias: ['role', 'credentials:roleId']
+});
+
+// Website
+nsArgs.option('credentials.website', {
+	alias: ['website', 'credentials:website']
+});
+
+//	Application Id
+nsArgs.option('credentials.applicationId', {
+	alias: ['applicationId', 'credentials:applicationId']
+});
+
+// Domain name (www.name.com)
+nsArgs.option('credentials.domain', {
+	alias: ['domain', 'credentials:domain']
+});
+
+// Reslet Script Id of the Extension Mechanism web service
+nsArgs.option('script.web_service', {
+	alias: ['web-script', 'script:web_service']
+});
+
+// Reslet Script Id of the Extension Mechanism file service
+nsArgs.option('script.file_service', {
+	alias: ['file-script', 'script:file_service']
+});
+
+// Reslet Script Deploy of the Extension Mechanism web service
+nsArgs.option('deploy.web_service', {
+	alias: ['web-deploy', 'deploy:web_service']
+});
+
+// If you want to start working on an extension you had previously in the file cabinet. Format
+nsArgs.option('fetchConfig.extension', {
+	alias: ['fetch', 'fetchConfig:extension']
 });
 
 function executeFetch(cb)

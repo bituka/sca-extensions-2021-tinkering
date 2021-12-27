@@ -1,6 +1,6 @@
 var fs = require('fs')
 ,   path = require('path')
-,   args = require('yargs').argv
+,   args = require('ns-args').argv()
 ,   inquirer = require('inquirer')
 ;
 

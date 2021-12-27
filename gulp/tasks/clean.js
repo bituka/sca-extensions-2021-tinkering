@@ -1,6 +1,6 @@
 var gulp = require('gulp'),
 configurations = require('../extension-mechanism/configurations'),
-shell = require('shelljs');
+fs = require('fs');
 
 const config = configurations.getConfigs();
 /**
@@ -16,8 +16,7 @@ gulp.task(
 	{
 		try
 		{
-			shell.rm('-rf', '.nsdeploy tmp ' + config.folders.local + ' ' + config.folders.deploy + ' '
-				+ require('../extension-mechanism/credentials-inquirer').nsdeploy_path);
+			fs.rmdirSync('.nsdeploy tmp ' + config.folders.local + ' ' + config.folders.deploy + ' ' + require('../extension-mechanism/credentials-inquirer').nsdeploy_path, { recursive: true });
 			cb();
 		}
 		catch (error)

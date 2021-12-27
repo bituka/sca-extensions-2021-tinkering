@@ -5,14 +5,13 @@ const configs = require('../extension-mechanism/configurations').getConfigs();
 const fs = require('fs');
 const path = require('path');
 const PluginError = require('../extension-mechanism/CustomError');
-const https = require('https');
-const { argv } = require('yargs');
-const express = require('express');
+const argv = require('ns-args').argv();
+const nsServer = require('ns-server');
 
 function whoService(req, res)
 {
-    var protocol = req.protocol
-    ,   host = req.get('host')
+    var protocol = req.connection.encrypted ? 'https' : 'http'
+    ,   host = req.headers.host
     ,   app = req.params.app
     ,   configs = require('../extension-mechanism/configurations').getConfigs()
     ,   extensionMode = configs.extensionMode
@@ -25,25 +24,21 @@ function whoService(req, res)
         ,   resource: 'css'
         ,   url: `${protocol}://${host}/tmp/css/${app}.css`
         }
-
+    ,   define_patch = {
+            tag: 'script',
+            resource: 'define_patch',
+            url: `${protocol}://${host}/define_patch.js`
+        }
     ,   requirejs = {
             tag: 'script'
         ,   resource: 'requirejs'
         ,   url: `${protocol}://${host}/tmp/require.js`
         }
-
-    ,   define_patch = {
-            tag: 'script'
-        ,   resource: 'define_patch'
-        ,   url: `${protocol}://${host}/define_patch.js`
-        }
-
     ,   javascript_libs = {
             tag: 'script'
         ,   resource: 'javascript_libs'
         ,   url: `${protocol}://${host}/tmp/javascript-libs.js`
         }
-
     ,   templates = {
             tag: 'script'
         ,   resource: 'templates'
@@ -177,45 +172,44 @@ gulp.task('connect', gulp.series(copyRequireJs, function start_server(cb)
 {
     try {
         var db_config = configs.dbConfig;
+		var server;
 
-        var app = express();
+		//setup secure server for scis
+		if (configs.credentials.is_scis) {
+			db_config.secure = true;
+
+			var keyfile = process.env[db_config.key] || db_config.key;
+			var certfile = process.env[db_config.cert] || db_config.cert;
+
+			if (!keyfile || !certfile) {
+				throw new PluginError('Https Certificate and/or Certificate Key Not Found.',
+					'Please check the paths or environment variables as registered in: gulp/config/config.json file.\n' +
+					'\tConfiguration variables: dbConfig->key and dbConfig->cert. Thank you.');
+			}
+
+			db_config.key = fs.readFileSync(keyfile, 'utf8')
+			db_config.cert = fs.readFileSync(certfile, 'utf8')
+
+			server = nsServer.createServer(db_config);
+		} else {
+			server = nsServer.createServer();
+		}
 
         // Allow CORS requests in server
-        app.use(function(req, res, next) {
-            res.header('Access-Control-Allow-Origin', '*');
-            res.header('Access-Control-Allow-Headers', '*');
+        server.use(function(req, res, next) {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Headers', '*');
             next();
         });
 
-        app.use('/', express.static(configs.folders.local));
-        app.use('/', express.static(configs.folders.source.source_path));
+        server.use('/', configs.folders.local);
+        server.use('/', configs.folders.source.source_path);
         //Service used by the index-local.ssp files to know what files load
-        app.use('/who/:app', whoService);
+        server.use('/who/:app', whoService);
         //Serves the script patch to ignore tpl defines executed by core javascript file
-        app.use('/define_patch.js', definePatchService);
+        server.use('/define_patch.js', definePatchService);
 
-        //setup secure server for scis
-        if (configs.credentials.is_scis) {
-            db_config.https = true;
-
-            var keyfile = process.env[db_config.key] || db_config.key;
-            var certfile = process.env[db_config.cert] || db_config.cert;
-
-            if (!keyfile || !certfile) {
-                throw new PluginError('Https Certificate and/or Certificate Key Not Found.',
-                    'Please check the paths or environment variables as registered in: gulp/config/config.json file.\n' +
-                    '\tConfiguration variables: dbConfig->key and dbConfig->cert. Thank you.');
-            }
-
-            db_config.key = fs.readFileSync(keyfile, 'utf8')
-            db_config.cert = fs.readFileSync(certfile, 'utf8')
-
-            var server = https.createServer(db_config, app);
-            server.listen(db_config.port);
-        } else {
-            //setup http server for sca/scs
-            app.listen(db_config.port);
-        }
+        server.listen(db_config.port);
         cb();
     }
     catch(error)

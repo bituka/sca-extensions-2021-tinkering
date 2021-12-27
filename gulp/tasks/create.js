@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 
 const gulp = require('gulp')
-,	c = require('ansi-colors')
+,   {color, colorText} = require('ns-logs')
 ,	PluginError = require('../extension-mechanism/CustomError')
 ,	configurations = require('../extension-mechanism/configurations')
 ,	yeoman = require('yeoman-environment')
@@ -73,12 +73,12 @@ function create(cb)
 		}
 		if(error.message.includes('operation was cancelled') || error.message.includes('Canceling'))
 		{
-			cb(new PluginError('gulp extension:create', c.yellow(error)));
+			cb(new PluginError('gulp extension:create', colorText(color.YELLOW, error)));
 			process.exit(2);
 		}
 		else
 		{
-			cb(new PluginError('gulp extension:create', c.yellow(error)));
+			cb(new PluginError('gulp extension:create', colorText(color.YELLOW, error)));
 		}
 	});
 }
@@ -129,12 +129,12 @@ function createCCT(cb)
             }
             if(error.message.includes('operation was cancelled') || error.message.includes('Canceling'))
             {
-                cb(new PluginError('gulp extension:create-cct', c.yellow(error)));
+                cb(new PluginError('gulp extension:create-cct', colorText(color.YELLOW, error)));
                 process.exit(2);
             }
             else
             {
-                cb(new PluginError('gulp extension:create-cct', c.yellow(error)));
+                cb(new PluginError('gulp extension:create-cct', colorText(color.YELLOW,error)));
             }
         });
 	}

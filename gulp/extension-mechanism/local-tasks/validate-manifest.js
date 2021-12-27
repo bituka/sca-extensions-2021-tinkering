@@ -1,5 +1,5 @@
 var fs = require('fs')
-,	log = require('ns-logs')
+,	{log} = require('ns-logs')
 ,	PluginError = require('../CustomError')
 ,	configs = require('../configurations').getConfigs()
 ,	path = require('path')

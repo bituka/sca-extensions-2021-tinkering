@@ -1,8 +1,7 @@
 /*jshint esversion: 6 */
 
 var fs = require('fs')
-,   log = require('ns-logs')
-,   c = require('ansi-colors')
+,   {log, colorText, color} = require('ns-logs')
 ,   inquirer = require('inquirer')
 ,   configurations = require('../configurations')
 ,   configs = configurations.getConfigs()
@@ -161,7 +160,7 @@ var extension_deploy_inquirer = {
                 {
                     if(data.has_bundle)
                     {
-                        log(c.green('Deploying from a published ' + data.manifest.type + '. Preparing to create a new one...'));
+                        log(colorText(color.GREEN, 'Deploying from a published ' + data.manifest.type + '. Preparing to create a new one...'));
                     }
 
                     if(!data.create_new_record &&
@@ -195,7 +194,7 @@ var extension_deploy_inquirer = {
                         data.new_extension = new_extension;
                         data.record_operation = 'create';
                         data.folder_changed = true;
-                        log(c.green('Preparing to ' + data.record_operation + ' the ' + data.manifest.type + ' record...'));
+                        log(colorText(color.GREEN, 'Preparing to ' + data.record_operation + ' the ' + data.manifest.type + ' record...'));
                         cb(null, data);
                     })
                     .catch(function(err)
@@ -256,7 +255,7 @@ var extension_deploy_inquirer = {
                             data.new_extension = new_extension;
                             data.folder_changed = extension_deploy_inquirer.folderChanged(data);
 
-                            log(c.green('Preparing to ' + data.record_operation + ' the ' + data.manifest.type + ' record...'));
+                            log(colorText(color.GREEN, 'Preparing to ' + data.record_operation + ' the ' + data.manifest.type + ' record...'));
                             cb(null, data);
                         })
                         .catch(function(err)
@@ -271,7 +270,7 @@ var extension_deploy_inquirer = {
                 //update simple case
                 data.folder_changed = false;
 
-                log(c.green('Uploading the ' + data.manifest.type + ' files. No record data has changed...'));
+                log(colorText(color.GREEN, 'Uploading the ' + data.manifest.type + ' files. No record data has changed...'));
                 data.record_operation = 'update';
                 cb(null, data);
             }
@@ -326,7 +325,7 @@ var extension_deploy_inquirer = {
         var targets_promise = inquirer.prompt({
             name: 'targets'
             ,   type: 'checkbox'
-            ,   message: 'Select supported products (Press ' + c.cyan('<space>') + ' to select)'
+            ,   message: 'Select supported products (Press ' + colorText(color.CYAN, '<space>')+ ' to select)'
             ,   choices:  ['SuiteCommerce Online', 'SuiteCommerce InStore']
             ,   default: get_from_manifest ? extension_target : record_target
             ,   validate: function(input)

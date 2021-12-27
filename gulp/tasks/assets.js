@@ -40,6 +40,6 @@ gulp.task('assets', function(cb)
 				cb(error);
 			}
 		}))
-		.pipe(gulp.dest(path.join(config.folders.output), {mode: '0777'}))
+		.pipe(gulp.dest(path.join(config.folders.output), { mode: 0o700 }))
 		.on('end', cb);
 });

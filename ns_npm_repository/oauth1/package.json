@@ -9,11 +9,12 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "express": "4.17.1"
+        "ns-server": "file:../ns-server",
+        "ns-request": "file:../ns-request"
     },
     "devDependencies": {
-        "jest": "25.5.1",
-        "jest-junit": "6.4.0",
+        "jest": "26.6.3",
+        "jest-junit": "12.0.0",
         "node-mocks": "file:../node-mocks"
     }
 }

@@ -2,7 +2,6 @@ var sourcemaps = require('gulp-sourcemaps')
 ,	gulp = require('gulp')
 ,	path = require('path')
 ,	fs = require('fs')
-,   shell = require('shelljs')
 ,	concat = require('files-concat')
 ,	map = require('map-stream')
 ,	_ = require('underscore');
@@ -83,11 +82,11 @@ function generateDefinesSection(manifests, application, dest_file)
 					{
 						if(file_path.endsWith(path.join(entry_point)))
 						{
-							entry_point_content = shell.cat(file_path) + '\n\n';
+							entry_point_content = fs.readFileSync(file_path) + '\n\n';
 						}
 						else
 						{
-                            var fileContent = shell.cat(file_path) + '\n\n';
+                            var fileContent = fs.readFileSync(file_path) + '\n\n';
                             extension_content += fileContent;
 							appModuleNames.push(getDefineNames(fileContent));
 						}
@@ -112,7 +111,7 @@ function generateDefinesSection(manifests, application, dest_file)
     content += `SC.ENVIRONMENT.EXTENSIONS_JS_MODULE_NAMES = ${JSON.stringify(appModuleNames)};`;
 	//var file_name = path.basename(dest_file, '.js');
 	//content = '//# sourceMappingURL=' + file_name + '.map\n' + content;
-	shell.ShellString(content).toEnd(dest_file);
+    appendContentToDestFile(dest_file, content);
 
 	//It was commented because doesn't work properly
 	//generateSourceMaps(app_javascript_files, dest_file);
@@ -154,6 +153,15 @@ function generateSourceMaps(files_extension, dest_file)
 	.pipe(gulp.dest(dest_dir));
 }
 
+function appendContentToDestFile(destFile, content) {
+    var destFileContent = '';
+    if (fs.existsSync(destFile)) {
+        destFileContent = fs.readFileSync(destFile).toString();
+    }
+    fs.writeFileSync(destFile, destFileContent+content);
+}
+
+
 function generateRequireSection(manifests, application, dest_file)
 {
 	var content = '';
@@ -190,7 +198,7 @@ function generateRequireSection(manifests, application, dest_file)
 		}
 	});
 
-	shell.ShellString(content).toEnd(dest_file);
+    appendContentToDestFile(dest_file, content);
 }
 
 function compileJavascript(cb)

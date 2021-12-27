@@ -3,10 +3,9 @@
 var env = require('yeoman-environment')
 ,   inquirer = require('inquirer')
 ,	configs = require('../configurations').getConfigs()
-,	log = require('ns-logs')
-,	c = require('ansi-colors')
+,	{log, color, colorText} = require('ns-logs')
 ,	path = require('path')
-,	shell = require('shelljs')
+,   { rmdirSync } = require('fs')
 ,	yeoman = require('yeoman-environment')
 ,	_ =  require('underscore')
 ;
@@ -161,7 +160,7 @@ function _removeSuiteScript(manifest, file_path, is_service)
 				//delete automatically generated service if the service controller is deleted
 				var service_name = path.basename(file_path).replace('.ServiceController.js', '')
 				,	service_path = path.join(manifest.local_folder, 'assets', 'services', service_name + '.Service.ss');
-				shell.rm('-rf', service_path);
+                rmdirSync(service_path, { recursive: true });
 
 				updateAssets({
 						manifest: manifest
@@ -539,7 +538,7 @@ function updateSkins(data)
 					,	file: data.file_path
 					});
 
-					log(c.yellow('Adding skin ' + data.file_path + ' to the manifest file. You should edit the manifest after it and add a proper name for this skin.'));
+					log(colorText(color.YELLOW, `Adding skin ${data.file_path} to the manifest file. You should edit the manifest after it and add a proper name for this skin.`));
 				}
 			}
 			else
@@ -597,7 +596,7 @@ function updateTranslations(data) {
 			_.each(applications, (appTranslations, app) => {
 				if (_.values(appTranslations).indexOf(data.file_path) < 0) {
 					appTranslations[lang] = data.file_path;
-					log(c.yellow(`Adding translations ${lang}(${data.file_path}) to ${app} into the manifest file.`));
+					log(colorText(color.YELLOW, `Adding translations ${lang}(${data.file_path}) to ${app} into the manifest file.`));
 				}
 			});
 
@@ -615,7 +614,7 @@ function updateTranslations(data) {
                 if(index >= 0) {
                     const lang = languages[index];
                     delete translations[lang];
-                    log(c.yellow(`Deleting translations ${lang}: ${data.file_path} from the manifest file.`));
+                    log(colorText(color.YELLOW, `Deleting translations ${lang}: ${data.file_path} from the manifest file.`));
                 }
 
 				if(translationsValues.length === 0) {

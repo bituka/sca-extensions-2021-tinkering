@@ -5,15 +5,15 @@ gulp.task('pre-templates', (cb)=>
 {
     if(process.running_local)
     {
-        var shell = require('shelljs')
+        var fs = require('fs')
         ,   path = require('path')
         ,   configurations = require('../extension-mechanism/configurations');
 
         var tpls_folder = path.join(configurations.getConfigs().folders.output, 'processed-templates');
 
-        if(!shell.test('-d', tpls_folder))
+        if(!fs.existsSync(tpls_folder))
         {
-            shell.mkdir('-p',tpls_folder);
+            fs.mkdirSync(tpls_folder, { recursive: true });
         }
     }
 

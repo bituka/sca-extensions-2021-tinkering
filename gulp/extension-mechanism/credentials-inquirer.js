@@ -7,10 +7,9 @@
 	also all the details to get the activation data: domain, subsidiary location and the app_manifest.json file.
 */
 
-const async = require('async');
+const async = require('ns-async');
 const fs = require('fs');
-const log = require('ns-logs');
-const c = require('ansi-colors');
+const {log, color, colorText} = require('ns-logs');
 const PluginError = require('../extension-mechanism/CustomError');
 const  inquirer = require('inquirer');
 const path = require('path');
@@ -23,6 +22,7 @@ var deploy_task = require('../ns-deploy/index')
 
 var configurations = require('./configurations');
 var configs = configurations.getConfigs();
+var args = require('ns-args').argv();
 
 var application_manifest_path = path.join(configs.folders.application_manifest, 'application_manifest.json')
     , 	nsdeploy_path = configs.nsdeployPath;
@@ -147,6 +147,7 @@ var credentials_inquirer = {
                             first_cb(null, initial_data);
                         }
                         ,	ui.selectToken
+                        ,   net.authorize
                         ,	credentials_inquirer.transformCredentials
                         ,	credentials_inquirer.writeCredentials
                     ]
@@ -195,7 +196,7 @@ var credentials_inquirer = {
                     var initial_data =  {
                         credentials: credentials || {}
                         ,	application_manifest: application_manifest || {}
-                        ,	info: {user_agent: credentials.user_agent, authID: credentials.authID, key: configs.key, secret: configs.secret}
+                        ,	info: {user_agent: credentials.user_agent, authID: credentials.authID, key: args.key, secret: args.secret}
                         ,	options: {molecule: credentials && credentials.molecule}
                     };
 
@@ -238,7 +239,9 @@ var credentials_inquirer = {
     {
 
         var credentials_tasks = [
-            async.apply(credentials_inquirer.transformCredentials, fetch_data),
+			function(callback) {
+				credentials_inquirer.transformCredentials(fetch_data, callback);
+			},
             WebsiteService.getWebsites,
             WebsiteService.getWebsiteDomains,
             credentials_inquirer.selectWebsite
@@ -305,7 +308,7 @@ var credentials_inquirer = {
     {
         var domains = fetch_data.websites[fetch_data.credentials.website].domains;
 
-        log(c.yellow('Select the correct options to identify the corresponding activation...'));
+        log(colorText(color.YELLOW, 'Select the correct options to identify the corresponding activation...'));
 
         inquirer.prompt([{
             type: 'list'

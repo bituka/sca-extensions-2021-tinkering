@@ -1,6 +1,6 @@
 'use strict';
 var gulp = require('gulp')
-,	shell = require('shelljs');
+,   fs = require('fs');
 
 gulp.task('sass-prepare', (cb) =>
 {
@@ -10,7 +10,7 @@ gulp.task('sass-prepare', (cb) =>
 
 gulp.task('clean-sass-tmp',(cb) =>
 {
-	shell.rm('-rf', 'tmp');
+	fs.rmdirSync( 'tmp', { recursive: true });
 	cb();
 });
 

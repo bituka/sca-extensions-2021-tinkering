@@ -1,9 +1,9 @@
 /*jshint esversion: 6 */
 
-var log = require('ns-logs')
-,	c = require('ansi-colors')
+var {log, color, colorText} = require('ns-logs')
 ,	configs = require('../configurations').getConfigs()
 ,	path = require('path')
+,   fs = require('fs')
 ,	_ =  require('underscore');
 
 var update_helper = require('./update-manifest-resources')
@@ -11,7 +11,6 @@ var update_helper = require('./update-manifest-resources')
 
 function impactChanges(manifest)
 {
-	var shell = require('shelljs');
 
 	var new_manifest = {
 		name: manifest.name
@@ -37,7 +36,7 @@ function impactChanges(manifest)
     ,	suitescript2: manifest.suitescript2
 	};
 
-	shell.ShellString(JSON.stringify(new_manifest, null, 4)).to(path.join(new_manifest.local_folder, 'manifest.json'));
+	fs.writeFileSync(path.join(new_manifest.local_folder, 'manifest.json'), JSON.stringify(new_manifest, null, 4));
 }
 
 function isSkin(file_path)
@@ -85,7 +84,7 @@ function updateManfiest(manifest, file_path, action)
                 file_promise = update_helper.updateSkins(update_data);
                 break;
 			}
-			
+
             if (compute_differences.isTranslation(file_path) && configs.extensionMode) {
                 file_promise = update_helper.updateTranslations(update_data);
                 break;
@@ -97,7 +96,7 @@ function updateManfiest(manifest, file_path, action)
             file_promise = update_helper.updateJavascript(update_data);
             break;
         default:
-            log(c.yellow('Sorry. Could not update the manifest for the file ' + file_path));
+            log(colorText(color.YELLOW, `Sorry. Could not update the manifest for the file ${file_path})`));
             file_promise = Promise.resolve();
             break;
     }
@@ -161,7 +160,7 @@ function startUpdateManifest(cb)
 	}
 	else
 	{
-		log(c.red('No extensions or themes in your workspace were found. Aborting. '));
+		log(colorText(color.RED, 'No extensions or themes in your workspace were found. Aborting.'));
 		cb();
 	}
 }

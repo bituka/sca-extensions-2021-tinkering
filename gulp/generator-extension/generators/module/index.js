@@ -1,7 +1,6 @@
-const log = require('ns-logs');
-const c = require('ansi-colors');
+const {color, colorText} = require('ns-logs');
 const path = require('path');
-const shell = require('shelljs');
+const { existsSync, mkdirSync } = require('fs');
 const _ = require('underscore');
 const configs = require('../../../../gulp/extension-mechanism/configurations').getConfigs();
 
@@ -12,8 +11,8 @@ module.exports = class extends Generator {
     super(args, opts);
 
     const context = this.options.gulp_context
-      ? `${this.options.gulp_context}/`
-      : '';
+        ? `${this.options.gulp_context}/`
+        : '';
     this.work_folder = this.options.work_folder;
     this.deploy_folder = this.options.deploy_folder;
     this.sourceRoot(`${context}generators/app/templates`);
@@ -25,8 +24,8 @@ module.exports = class extends Generator {
   }
 
   prompting() {
-    this.log(
-      '\nWelcome! Let´s bootstrap your module by following these steps:\n',
+    console.log(
+        '\nWelcome! Let´s bootstrap your module by following these steps:\n'
     );
 
     return this.prompt([
@@ -71,48 +70,48 @@ module.exports = class extends Generator {
         ],
       },
     ])
-      .then((answers) => {
-        this.extension_options = answers;
+        .then((answers) => {
+          this.extension_options = answers;
 
-        this.extension_options.is_cct = false;
-        return this._inquireExtension();
-      })
-      .then((manifest) => {
-        this.extension_options.name = manifest.name;
-        this.extension_options.vendor = manifest.vendor;
-        this.extension_options.fantasy_name = manifest.fantasy_name;
+          this.extension_options.is_cct = false;
+          return this._inquireExtension();
+        })
+        .then((manifest) => {
+          this.extension_options.name = manifest.name;
+          this.extension_options.vendor = manifest.vendor;
+          this.extension_options.fantasy_name = manifest.fantasy_name;
 
-        this.extension_options.application = this.config.get('ext_application')
-          ? this.config.get('ext_application')[manifest.name]
-          : ['shopping', 'myaccount', 'checkout'];
-        const root_ext_path = path.join(
-          this.contextRoot,
-          this.work_folder,
-          this.extension_options.name,
-          this.extension_options.module_name,
-        );
-
-        if (shell.test('-d', root_ext_path)) {
-          return this.prompt([
-            {
-              type: 'confirm',
-              name: 'continue',
-              message:
-                'The module '
-                + this.extension_options.module_name
-                + ' already exists.\nDo you want to continue and overwrite it?',
-            },
-          ]);
-        }
-      })
-      .then((answer_confirm) => {
-        if (answer_confirm && !answer_confirm.continue) {
-          this.env.error(
-            'Canceling extension:create-module for '
-              + this.extension_options.module_name,
+          this.extension_options.application = this.config.get('ext_application')
+              ? this.config.get('ext_application')[manifest.name]
+              : ['shopping', 'myaccount', 'checkout'];
+          const root_ext_path = path.join(
+              this.contextRoot,
+              this.work_folder,
+              this.extension_options.name,
+              this.extension_options.module_name,
           );
-        }
-      });
+
+          if (existsSync(root_ext_path)) {
+            return this.prompt([
+              {
+                type: 'confirm',
+                name: 'continue',
+                message:
+                    'The module '
+                    + this.extension_options.module_name
+                    + ' already exists.\nDo you want to continue and overwrite it?',
+              },
+            ]);
+          }
+        })
+        .then((answer_confirm) => {
+          if (answer_confirm && !answer_confirm.continue) {
+            this.env.error(
+                'Canceling extension:create-module for '
+                + this.extension_options.module_name,
+            );
+          }
+        });
   }
 
   _inquireExtension() {
@@ -122,9 +121,9 @@ module.exports = class extends Generator {
     const self = this;
     const type = this.extension_options.is_cct ? 'CCT' : 'module';
     extensions_path = _.filter(
-      extensions_path,
-      (extension_path) => !_.isUndefined(
-          self.fs.readJSON(path.join(extension_path, 'manifest.json')),
+        extensions_path,
+        (extension_path) => !_.isUndefined(
+            self.fs.readJSON(path.join(extension_path, 'manifest.json')),
         ),
     );
 
@@ -147,10 +146,10 @@ module.exports = class extends Generator {
       ]).then((ext_answer) => {
         ext_answer = ext_answer.extension;
         manifest_path = path.join(
-          this.contextRoot,
-          configs.folders.source.source_path,
-          ext_answer,
-          'manifest.json',
+            this.contextRoot,
+            configs.folders.source.source_path,
+            ext_answer,
+            'manifest.json',
         );
         manifest = self.fs.readJSON(manifest_path);
 
@@ -158,27 +157,27 @@ module.exports = class extends Generator {
       });
     }
     this.env.error(
-      'Sorry. Could not find extension to add additional ' + type + '.',
+        'Sorry. Could not find extension to add additional ' + type + '.',
     );
   }
 
   writing() {
     // create module folders
     const root_ext_path = path.join(
-      this.contextRoot,
-      this.work_folder,
-      this.extension_options.name,
+        this.contextRoot,
+        this.work_folder,
+        this.extension_options.name,
     );
     const assets_path = path.join(root_ext_path, 'assets');
     const manifest_dest_path = path.join(root_ext_path, 'manifest.json');
     const { module_name } = this.extension_options;
     const module_path = path.join(
-      root_ext_path,
-      'Modules',
-      this.extension_options.module_name,
+        root_ext_path,
+        'Modules',
+        this.extension_options.module_name,
     );
     const self = this;
-    shell.mkdir('-p', module_path);
+      mkdirSync(module_path, {recursive: true});
 
     // add resources accordignly
     const manifest = this.fs.readJSON(manifest_dest_path);
@@ -190,21 +189,21 @@ module.exports = class extends Generator {
         this.extension_options.module_name,
       ];
       const cct_name = cct_name_array
-        .map((value) => value.toLowerCase())
-        .join('_');
+          .map((value) => value.toLowerCase())
+          .join('_');
       const icon_name = `${cct_name}_icon.svg`;
       const cct_icon_dest_path = path.join(assets_path, 'img', icon_name);
-      shell.mkdir('-p', path.join(assets_path, 'img'));
+        mkdirSync(path.join(assets_path, 'img'), { recursive: true });
 
       this.fs.copy(
-        path.join(
-          this.options.gulp_context,
-          'generators',
-          'app',
-          'templates',
-          'cct_icon.svg',
-        ),
-        this.destinationPath(cct_icon_dest_path),
+          path.join(
+              this.options.gulp_context,
+              'generators',
+              'app',
+              'templates',
+              'cct_icon.svg',
+          ),
+          this.destinationPath(cct_icon_dest_path),
       );
 
       this.extension_options.cct_name = cct_name;
@@ -264,49 +263,39 @@ module.exports = class extends Generator {
     const time_diff = Math.abs(new Date() - this.initial_time);
     const type = this.extension_options.is_cct ? 'cct' : 'module';
 
-    this.log(
-      c.green(
-        `\nGood! The process "extension:create-${type}" finished after ${Math.round(
-          time_diff / 1000,
-        )} sec.`,
-      ),
-    );
-    this.log(
-      c.green('You can continue developing using the following commands:\n'),
-    );
-    this.log(
-      `${c.green(
-        '\t1- ',
-      )}gulp extension:fetch - to get the current theme and compile all the resources.\n${c.green(
-        '\t2- ',
-      )}gulp extension:update-manifest - update the manifest.json according to the files you added or removed.\n${c.green(
-        '\t2- ',
-      )}gulp extension:local - (Optional) to develop locally styles, templates and javascript files.\n${c.green(
-        '\t3- ',
-      )}gulp extension:deploy - to deploy your extension to the file cabinet and try it using the Extension Management UI.\n`,
+    console.log(
+        `${colorText(
+            color.GREEN,
+            `Good! The process "extension:create-${type}" finished after ${Math.round(
+                time_diff / 1000
+            )} sec.`
+        )}`
     );
 
-    this.log(
-      '\tType '
-        + c.cyan('gulp')
-        + ' for extra help on how to use the commands.\n',
+    console.log(`${colorText(color.GREEN, 'You can continue developing using the following commands:')}`);
+    console.log(`${colorText(color.GREEN,'\t1-')} gulp extension:fetch - to get the current theme and compile all the resources.
+        ${colorText(color.GREEN, '2-')} gulp extension:update-manifest - update the manifest.json according to the files you added or removed.
+        ${colorText(color.GREEN, '3-')} gulp extension:local - (Optional) to develop locally styles, templates and javascript files.
+        ${colorText(color.GREEN, '4-')} gulp extension:deploy - to deploy your extension to the file cabinet and try it using the Extension Management UI.`
     );
+
+    console.log(`Type ${colorText(color.CYAN,'gulp')} for extra help on how to use the commands.\n`);
 
     if (this.extension_options.is_cct) {
       const default_logo_path =        'SuiteScripts/'
-        + this.deploy_folder
-        + '/'
-        + this.extension_options.vendor
-        + '/'
-        + this.extension_options.name
-        + '@'
-        + this.extension_options.version
-        + '/assets/'
-        + this.extension_options.cct_name
-        + '_icon.svg';
+          + this.deploy_folder
+          + '/'
+          + this.extension_options.vendor
+          + '/'
+          + this.extension_options.name
+          + '@'
+          + this.extension_options.version
+          + '/assets/'
+          + this.extension_options.cct_name
+          + '_icon.svg';
       const { manifest } = this.extension_options;
       let extension_application =        this.extension_options.application
-        && this.extension_options.application[0];
+          && this.extension_options.application[0];
 
       // in case the parent extension of the cct has not being added through the gulp extension:create command
       if (!extension_application) {
@@ -328,53 +317,28 @@ module.exports = class extends Generator {
         this.extension_options.name,
         this.extension_options.module_name,
       ]
-        .join('-')
-        .toLowerCase();
+          .join('-')
+          .toLowerCase();
       const entry_point_js =        manifest.javascript.entry_points[extension_application];
       const entry_point_name = path.basename(entry_point_js);
       const entry_point_css = manifest.sass.entry_points[extension_application];
       const entry_point_css_name = path.basename(entry_point_css);
 
-      this.log(
-        'An example Hello World CCT was generated with id '
-          + c.green(this.extension_options.cct_name)
-          + ' to show you the basic setup. Feel free to modify it.\n'
-          + 'Check the manifest.json --> cct section to change its settings.\n'
-          + c.green('\ta) ')
-          + 'Customize the default icon "'
-          + this.extension_options.cct_name
-          + '_icon.svg" to include your own.\n'
-          + c.green('\tb) ')
-          + 'Remember that the cct record id (settings_record key) must be less than 28 characters long (without including "customrecord").\n'
-          + c.green('\tc) ')
-          + 'The CCT label must be less than 18 characters long.\n'
-          + 'For more info on how to create ccts go to '
-          + c.cyan('https://developers.suitecommerce.com/section1516375561')
-          + '.\n\n'
-          + 'This CCT was added as part of the extension '
-          + c.green(this.extension_options.name)
-          + '.\n'
-          + 'In order to be executed you need to:\n'
-          + c.green('\t1- ')
-          + 'Go to the javascript file '
-          + entry_point_name
-          + '.\n'
-          + c.green('\t2- ')
-          + 'Include "'
-          + entrypoint_cct_name
-          + '.js" as a dependency.\n'
-          + c.green('\t3- ')
-          + 'Add the following line: "< CCT dependency >.mountToApp(container);"\n'
-          + c.green('\t4- ')
-          + 'Import the styles of "_'
-          + entrypoint_cct_sass
-          + '.scss" to the entry point file: "'
-          + entry_point_css_name
-          + '".',
-      );
+      console.log(`An example Hello World CCT was generated with id ${colorText(color.GREEN, this.extension_options.cct_name)} to show you the basic setup. Feel free to modify it.\n
+      Check the manifest.json --> cct section to change its settings.\n
+      ${colorText(color.GREEN, 'a)')}Customize the default icon "${this.extension_options.cct_name}_icon.svg" to include your own.
+      ${colorText(color.GREEN, 'b)')}Remember that the cct record id (settings_record key) must be less than 28 characters long (without including "customrecord").
+      ${colorText(color.GREEN, 'c)')}The CCT label must be less than 18 characters long.
+      For more info on how to create ccts go to ${colorText(color.CYAN, 'https://developers.suitecommerce.com/section1516375561')}.\n\n
+      This CCT was added as part of the extension ${colorText(color.GREEN, this.extension_options.name)}.\n
+      In order to be executed you need to:\n
+      ${colorText(color.GREEN, '1-')}Go to the javascript file ${entry_point_name}.
+      ${colorText(color.GREEN,'2-')}Include "${entrypoint_cct_name}.js" as a dependency.
+      ${colorText(color.GREEN, '3-')}Add the following line: "< CCT dependency >.mountToApp(container);"
+      ${colorText(color.GREEN, '4-')}Import the styles of "_${entrypoint_cct_sass}.scss" to the entry point file: "${entry_point_css_name}".`);
     }
 
-    this.log(c.green('\nThank you.'));
+    console.log(colorText(color.GREEN, '\nThank you.'));
   }
 
   _writeJavascript(data) {
@@ -385,25 +349,25 @@ module.exports = class extends Generator {
     ];
     const module_full_name = module_full_name_array.join('.');
     const tpl_name = module_full_name_array
-      .map((value) => value.toLowerCase())
-      .join('_');
+        .map((value) => value.toLowerCase())
+        .join('_');
     const service_name = this.extension_options.module_name;
     const view_id = this.extension_options.module_name;
     const module_dep_name = this.extension_options.module_name;
     const tpl_dep_name = tpl_name;
     const javascript_path = path.join(
-      data.base_path,
-      'Modules',
-      this.extension_options.module_name,
-      'JavaScript',
-      data.module_name,
+        data.base_path,
+        'Modules',
+        this.extension_options.module_name,
+        'JavaScript',
+        data.module_name,
     );
     const full_entry_point_path = path.join(
-      data.base_path,
-      'Modules',
-      this.extension_options.module_name,
-      'JavaScript',
-      module_full_name,
+        data.base_path,
+        'Modules',
+        this.extension_options.module_name,
+        'JavaScript',
+        module_full_name,
     );
     const manifest_module_path = [
       'Modules',
@@ -419,54 +383,54 @@ module.exports = class extends Generator {
     ].join('/');
     if (this.extension_options.is_cct) {
       this.fs.copyTpl(
-        path.join(
-          this.options.gulp_context,
-          'generators',
-          'app',
-          'templates',
-          'JavaScript',
-          'EntryPoint.CCT.js',
-        ),
-        this.destinationPath(`${full_entry_point_path}.js`),
-        {
-          module_name: module_full_name,
-          module_dep_name,
-          cct_id: this.extension_options.cct_name,
-        },
+          path.join(
+              this.options.gulp_context,
+              'generators',
+              'app',
+              'templates',
+              'JavaScript',
+              'EntryPoint.CCT.js',
+          ),
+          this.destinationPath(`${full_entry_point_path}.js`),
+          {
+            module_name: module_full_name,
+            module_dep_name,
+            cct_id: this.extension_options.cct_name,
+          },
       );
 
       this.fs.copyTpl(
-        path.join(
-          this.options.gulp_context,
-          'generators',
-          'app',
-          'templates',
-          'JavaScript',
-          'View.CCT.js',
-        ),
-        this.destinationPath(`${javascript_path}.View.js`),
-        {
-          module_name: module_full_name,
-          tpl_name,
-          tpl_dep_name,
-          module_dep_name,
-        },
+          path.join(
+              this.options.gulp_context,
+              'generators',
+              'app',
+              'templates',
+              'JavaScript',
+              'View.CCT.js',
+          ),
+          this.destinationPath(`${javascript_path}.View.js`),
+          {
+            module_name: module_full_name,
+            tpl_name,
+            tpl_dep_name,
+            module_dep_name,
+          },
       );
     } else if (this.is_scis) {
       this.fs.copyTpl(
-        path.join(
-          this.options.gulp_context,
-          'generators',
-          'app',
-          'templates',
-          'JavaScript',
-          'EntryPoint.SCIS.js',
-        ),
-        this.destinationPath(`${full_entry_point_path}.js`),
-        {
-          module_name: module_full_name,
-          module_dep_name,
-        },
+          path.join(
+              this.options.gulp_context,
+              'generators',
+              'app',
+              'templates',
+              'JavaScript',
+              'EntryPoint.SCIS.js',
+          ),
+          this.destinationPath(`${full_entry_point_path}.js`),
+          {
+            module_name: module_full_name,
+            module_dep_name,
+          },
       );
     } else {
       this.fs.copyTpl(

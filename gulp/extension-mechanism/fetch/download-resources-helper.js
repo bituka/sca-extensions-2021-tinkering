@@ -1,8 +1,7 @@
 /*jshint esversion: 6 */
 'use strict';
 
-var log = require('ns-logs')
-,	c = require('ansi-colors')
+var {log, colorText, color} = require('ns-logs')
 ,	configs = require('../configurations').getConfigs()
 ,	_ = require('underscore')
 ,	semver = require('semver');
@@ -39,7 +38,7 @@ var DownloadResourcesHelper = {
 
             if (result.extension_record && result.has_bundle)
             {
-                log(c.yellow('Cannot fetch packaged extension ' + manifest.name + '.\n' +
+                log(colorText(color.YELLOW, 'Cannot fetch packaged extension ' + manifest.name + '.\n' +
                     '\tYou can only fetch custom extensions located in your file cabinet.\n'));
 
                 return [];

@@ -1,7 +1,7 @@
 // @module suitetalk @class SuiteTalk
 
 const _ = require('underscore');
-let request = require('request');
+const request = require('ns-request');
 const xml2js = require('xml2js');
 const tool = require('./tool');
 const Queue = require('./queue');
@@ -104,16 +104,16 @@ _(tool).extend({
             (self.dataCenterDomains && self.dataCenterDomains.webservices) ||
             this.getDefaultWebServiceUrl();
 
-        const args = require('yargs').argv;
+        const args = require('ns-args').argv();
         if (args.proxy) {
-            request = request.defaults({ proxy: args.proxy });
+            request.defaults({ proxy: args.proxy });
         }
         return new Promise(function(resolve, reject) {
             self.getQueue().add(self, function(taskDone) {
-                const req = request(
-                    {
-                        method: 'POST',
-                        uri: `${datacenterDomain}/services/NetSuitePort_${self.nsVersion}`,
+                request
+                    .post({
+                        path: `${datacenterDomain}/services/NetSuitePort_${self.nsVersion}`,
+                        body: payload,
                         headers: {
                             'User-Agent': self.credentials.user_agent || 'Node-SOAP/0.0.1',
                             Accept:
@@ -124,14 +124,10 @@ _(tool).extend({
                             'Content-Type': 'text/xml; charset=utf-8',
                             SOAPAction: `"${action}"`
                         }
-                    },
-                    function(err, response) {
-                        if (err) {
-                            return cb(err);
-                        }
-
+                    })
+                    .then(function(response) {
                         self.log(`Response text for action: ${action}\n${response.body}`);
-                        xml2js.parseString(response.body, self._xml2jsOptions, function(
+                        xml2js.parseString(response, self._xml2jsOptions, function(
                             err,
                             result
                         ) {
@@ -149,11 +145,9 @@ _(tool).extend({
 
                             cb(null, soap_body, result);
                         });
-                    }
-                );
+                    });
 
                 self.log(`Request text for action: ${action}\n${payload}`);
-                req.end(payload);
             });
         });
     }

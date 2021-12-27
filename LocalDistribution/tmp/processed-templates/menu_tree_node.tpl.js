@@ -16,7 +16,7 @@ define('menu_tree_node.tpl', ['Handlebars','Handlebars.CompilerNameLookup'], fun
     + "\n		<i class=\"menu-tree-node-item-icon\"></i>\n	</a>\n\n	<div id=\"menu-tree-node-"
     + alias2(alias1(((stack1 = (depth0 != null ? compilerNameLookup(depth0,"node") : depth0)) != null ? compilerNameLookup(stack1,"id") : stack1), depth0))
     + "\" data-type=\"menu-tree-node-expander\" class=\"menu-tree-node-submenu menu-tree-node-submenu-level-"
-    + alias2(((helper = (helper = compilerNameLookup(helpers,"level") || (depth0 != null ? compilerNameLookup(depth0,"level") : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0 != null ? depth0 : (container.nullContext || {}),{"name":"level","hash":{},"data":data}) : helper)))
+    + alias2(((helper = (helper = compilerNameLookup(helpers,"level") || (depth0 != null ? compilerNameLookup(depth0,"level") : depth0)) != null ? helper : container.hooks.helperMissing),(typeof helper === "function" ? helper.call(depth0 != null ? depth0 : (container.nullContext || {}),{"name":"level","hash":{},"data":data,"loc":{"start":{"line":10,"column":133},"end":{"line":10,"column":142}}}) : helper)))
     + " collapse\">\n		<div class=\"menu-tree-node-submenu-wrapper\" data-view=\"MenuItems.Collection\"></div>\n	</div>\n\n</div>\n\n";
 },"3":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=container.lambda, alias2=container.escapeExpression;
@@ -34,9 +34,9 @@ define('menu_tree_node.tpl', ['Handlebars','Handlebars.CompilerNameLookup'], fun
     + "\">"
     + alias2(alias1(((stack1 = (depth0 != null ? compilerNameLookup(depth0,"node") : depth0)) != null ? compilerNameLookup(stack1,"name") : stack1), depth0))
     + "</a>\n\n</div>\n\n";
-},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+},"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1;
 
-  return ((stack1 = compilerNameLookup(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),((stack1 = (depth0 != null ? compilerNameLookup(depth0,"node") : depth0)) != null ? compilerNameLookup(stack1,"showChildren") : stack1),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data})) != null ? stack1 : "")
+  return ((stack1 = compilerNameLookup(helpers,"if").call(depth0 != null ? depth0 : (container.nullContext || {}),((stack1 = (depth0 != null ? compilerNameLookup(depth0,"node") : depth0)) != null ? compilerNameLookup(stack1,"showChildren") : stack1),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":24,"column":7}}})) != null ? stack1 : "")
     + "\n\n\n";
-},"useData":true}; var main = t.main; t.main = function(){ arguments[1] = arguments[1] || {}; var ctx = arguments[1]; ctx._extension_path = 'http://localhost:7777/tmp/extensions/SC/Horizon/3.0.7/'; ctx._theme_path = 'http://localhost:7777/tmp/extensions/SC/Horizon/3.0.7/'; return main.apply(this, arguments); }; var template = Handlebars.template(t); template.Name = 'menu_tree_node'; return template;});
+},"useData":true}; var main = t.main; t.main = function(){ arguments[1] = arguments[1] || {}; var ctx = arguments[1]; ctx._extension_path = 'http://localhost:7777/tmp/extensions/SC/Summit/3.1.1/'; ctx._theme_path = 'http://localhost:7777/tmp/extensions/SC/Summit/3.1.1/'; return main.apply(this, arguments); }; var template = Handlebars.template(t); template.Name = 'menu_tree_node'; return template;});

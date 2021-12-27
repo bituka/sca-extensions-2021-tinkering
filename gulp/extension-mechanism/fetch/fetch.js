@@ -1,14 +1,12 @@
 'use strict';
 
-const async = require('async');
+const async = require('ns-async');
 const fs = require('fs');
-const log = require('ns-logs');
-const c = require('ansi-colors');
+const {log, color, colorText} = require('ns-logs');
 const PluginError = require('../CustomError');
 const inquirer = require('inquirer');
 const configurations = require('../configurations');
 const _ = require('underscore');
-const args = require('yargs').argv;
 
 const ExtMechanismInquirer = require('../credentials-inquirer');
 const FileCabinet = require('../../library/file-cabinet');
@@ -62,7 +60,7 @@ function searchActivationManifest(fetch_data, cb)
         credentials.location
     ]).join('-');
 
-    log(c.green('Looking for Activation Manifest for ' + activation_key + '...'));
+    log(colorText(color.GREEN, 'Looking for Activation Manifest for ' + activation_key + '...'));
 
     FileCabinet.searchFile(
         {
@@ -104,7 +102,7 @@ function searchActivationManifest(fetch_data, cb)
 
 function downloadActivationManifest(fetch_data, cb)
 {
-    log(c.green('Downloading Activation Manifest...'));
+    log(colorText(color.GREEN, 'Downloading Activation Manifest...'));
 
     FileCabinet.getFileContents(
         fetch_data.activation_manifest.internalId
@@ -123,7 +121,7 @@ function downloadActivationManifest(fetch_data, cb)
 
 function inquirerExtensions(fetch_data, cb)
 {
-    if(!configs.extensionMode || args.fetch)
+    if(!configs.extensionMode || configs.fetchConfig.extension)
     {
         return 	cb(null, fetch_data);
     }
@@ -143,7 +141,7 @@ function inquirerExtensions(fetch_data, cb)
     });
 
     if(!questions[0].choices.length){
-        log(c.yellow('There are no extensions to fetch...'));
+        log(colorText(color.YELLOW, 'There are no extensions to fetch...'));
         return cb(null, fetch_data);
     }
 
@@ -255,10 +253,10 @@ function downloadActiveExtensions(fetch_data, cb)
         {
             var ext_actives_msg = extension_actives.length ? ' and ' + extension_actives.join(',') : '';
 
-            log(c.yellow('The extension/s ' + ext_not_actives.join(',') + ' is not currently active ' +
-                'for the domain ' + fetch_data.credentials.domain + '\n' +
-                '\tYou need to activate it first to start working locally with it.\n' +
-                '\tFetching only active theme' + ext_actives_msg + '...'));
+            log(colorText(color.YELLOW, 'The extension/s ' + ext_not_actives.join(',') + ' is not currently active ' +
+                    'for the domain ' + fetch_data.credentials.domain + '\n' +
+                    '\tYou need to activate it first to start working locally with it.\n' +
+                    '\tFetching only active theme' + ext_actives_msg + '...'));
         }
     }
 

@@ -1,13 +1,14 @@
 /* jshint node: true */
 /*jshint esversion: 6 */
 
-const async = require('async');
+const async = require('ns-async');
 const through = require('through');
 const PluginError = require('../extension-mechanism/CustomError');
 const fs = require('./fs');
 const ui = require('./ui');
 const net = require('./net');
-const args = require('yargs').argv;
+const args = require('ns-args').argv();
+
 
 const package_manager = require('../package-manager');
 
@@ -124,7 +125,9 @@ function doUntilGetWebsiteAndDomain(deploy, cb) {
         function(cb_dountill) {
             async.waterfall(
                 [
-                    async.apply(net.getWebsitesAndDomains, deploy),
+					function(callback) {
+						net.getWebsitesAndDomains(deploy, callback);
+					},
                     ui.getWebsitesAndDomains,
                     net.getConfigurationForDomain
                     // ui.getConfigurationForDomain
@@ -165,7 +168,9 @@ function doUntilGetFolder(deploy, cb) {
         function(cb_dountill) {
             async.waterfall(
                 [
-                    async.apply(net.targetFolder, deploy),
+					function(callback) {
+						net.targetFolder(deploy, callback);
+					},
                     ui.targetHostingFolder,
                     ui.targetPublisherFolder,
                     ui.targetSSPFolder
