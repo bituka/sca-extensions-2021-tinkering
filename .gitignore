@@ -17,5 +17,6 @@
 *.nsdeploy
 node_modules
 gulp
-
+LocalDistribution
+DeployDistribution
 .nsdeploy

@@ -16,7 +16,9 @@ define("GarryG.ExternalAPI.ExternalApi.ServiceController"
 
     get: function get() {
 
-      // return ExternalApiModel.get();
+      var id = this.request.getParameter('id') || this.data.id;
+
+      return ExternalApiModel.get(id);
 
       // var stSuiteletUrl = nlapiResolveURL('SUITELET', 'customscript_example_suitelet','customdeploy_example_suitelet', true);
       // stSuiteletUrl = stSuiteletUrl + '&customer=' + nlapiGetUser();

@@ -5,7 +5,7 @@
 	Example:
 	@import "other-sass-file.scss";
 	@import "../../<other module>/Sass/other-sass-file.scss";
-*/ 
+*/
 
 .externalapi-info-card {
     @extend .info-card;
@@ -16,3 +16,4 @@
     color: $sc-color-secondary;
     font-weight: bold;
 }
+

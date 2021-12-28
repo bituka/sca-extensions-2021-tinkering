@@ -13,21 +13,32 @@ define(
 	return  {
 		mountToApp: function mountToApp (container)
 		{
-			// using the 'Layout' component we add a new child view inside the 'Header' existing view 
+			// using the 'Layout' component we add a new child view inside the 'Header' existing view
 			// (there will be a DOM element with the HTML attribute data-view="Header.Logo")
 			// more documentation of the Extensibility API in
 			// https://system.netsuite.com/help/helpcenter/en_US/APIs/SuiteCommerce/Extensibility/Frontend/index.html
-			
-			/** @type {LayoutComponent} */
-			var layout = container.getComponent('Layout');
-			
-			if(layout)
-			{
-				layout.addChildView('Header.Logo', function() { 
-					return new ExternalApiView({ container: container });
-				});
-			}
 
+			/** @type {LayoutComponent} */
+			// var layout = container.getComponent('Layout');
+
+			// if(layout)
+			// {
+			// 	layout.addChildView('Header.Logo', function() {
+			// 		return new ExternalApiView({ container: container });
+			// 	});
+			// }
+
+			var checkout = container.getComponent('Checkout');
+
+			checkout.addModuleToStep(
+			{
+				step_url: 'billing'
+				, module: {
+					id: 'ExternalApiView'
+					, index: 99
+					, classname: 'GarryG.ExternalAPI.ExternalApi.View'
+				}
+			});
 		}
 	};
 });

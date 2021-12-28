@@ -1,17 +1,20 @@
 <section class="externalapi-info-card">
     <span class="externalapi-info-card-content">
-      {{message}}
+      {{message}}{{modelid}}
     </span>
+</section>
+<section class="apitest">
+  <button data-action="get-detail" class="button-primary" type="button" id="get-detail">getdetailbyId</button>
 </section>
 
 
 <!--
   Available helpers:
   {{ getExtensionAssetsPath "img/image.jpg"}} - reference assets in your extension
-  
+
   {{ getExtensionAssetsPathWithDefault context_var "img/image.jpg"}} - use context_var value i.e. configuration variable. If it does not exist, fallback to an asset from the extension assets folder
-  
+
   {{ getThemeAssetsPath context_var "img/image.jpg"}} - reference assets in the active theme
-  
+
   {{ getThemeAssetsPathWithDefault context_var "img/theme-image.jpg"}} - use context_var value i.e. configuration variable. If it does not exist, fallback to an asset from the theme assets folder
 -->

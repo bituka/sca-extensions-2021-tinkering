@@ -14,12 +14,18 @@ define('ExternalApi.Model'
 
 			name: 'ExternalApi.Model'
 
-            , get: function ()
+            , get: function (id)
             {
                 try
                 {
+                    var outputArr = [];
 
-                    var url = 'https://jsonplaceholder.typicode.com/todos'
+                    var url = 'https://jsonplaceholder.typicode.com/todos';
+
+                    if(id)
+                    {
+                        url = url + '/' + id;
+                    }
                     // ,   timeStamp = Math.round(+new Date() / 1000)
                     /*,   authorization = 'OAuth realm="665798",'+
                         'oauth_consumer_key="499137b60efa9aa931761971b07d9aae28ed0ef1d0af7bf5518f572c5f68816f",'+
@@ -34,7 +40,7 @@ define('ExternalApi.Model'
                     //     'nlauth_email="ns.lonestar@kodella.com",'+
                     //     'nlauth_signature="#zeKLY9pY6uK",'+
                     //     'nlauth_role="1032"'
-                    ,   headers = {
+                    var   headers = {
                         'User-Agent-x': 'SuiteScript-Call'
                     // ,   "Authorization": authorization
                     ,   "Content-Type": 'application/json'
@@ -48,7 +54,10 @@ define('ExternalApi.Model'
                     // nlapiLogExecution("DEBUG", "output",output);
                     // nlapiLogExecution("DEBUG", "output.getBody()", output.getBody());
 
-                    return output.getBody();
+                    outputArr.push(JSON.parse(output.getBody())); // JSON.parse(output.getBody());
+                    outputArr.push(id);
+
+                    return outputArr;
                 }
                 catch(e)
                 {
