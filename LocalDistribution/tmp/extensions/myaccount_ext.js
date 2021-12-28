@@ -1,3 +1,0 @@
-var extensions = {};
-
-SC.ENVIRONMENT.EXTENSIONS_JS_MODULE_NAMES = [];
