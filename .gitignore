@@ -15,8 +15,9 @@
 /Extension/tmp/*
 /Theme/tmp/*
 *.nsdeploy
-node_modules
-gulp
-LocalDistribution
-DeployDistribution
+node_modules/
+gulp/
+LocalDistribution/
+DeployDistribution/
 .nsdeploy
+.vscode
