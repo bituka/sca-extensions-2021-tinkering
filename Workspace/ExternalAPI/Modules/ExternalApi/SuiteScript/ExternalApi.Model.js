@@ -65,5 +65,23 @@ define('ExternalApi.Model'
                 }
 
 			}
+
+            , post: function (data)
+            {
+                try
+                {
+
+                    // nlapiLogExecution('DEBUG', "data", data);
+                    // var outputArr = [];
+
+                    // var url = 'https://jsonplaceholder.typicode.com/todos';
+
+                    // return 'post: ';
+
+                }catch(e)
+                {
+                    nlapiLogExecution('ERROR', "e", e);
+                }
+            }
 		});
 	});

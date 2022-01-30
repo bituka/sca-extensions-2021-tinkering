@@ -5,6 +5,7 @@
 </section>
 <section class="apitest">
   <button data-action="get-detail" class="button-primary" type="button" id="get-detail">getdetailbyId</button>
+  <button data-action="create-post" class="button-primary" type="button" id="get-detail">createPost</button>
 </section>
 
 

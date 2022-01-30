@@ -77,8 +77,25 @@ define('GarryG.ExternalAPI.ExternalApi.View'
 	// 	}
 
 	,	events: {
-		'click [data-action="get-detail"]': 'getDetail'
+			'click [data-action="get-detail"]': 'getDetail'
+		, 	'click [data-action="create-post"]': 'createPost'
+		}
 
+	,	createPost: function(e) {
+			e.preventDefault();
+			console.log('GarryG.ExternalAPI.ExternalApi.View.createPost', e);
+
+			this.model.save({
+				title: 'foo',
+				body: 'bar',
+				userId: 1,
+			}).done(function(result) {
+				// this.model.fetch().done(function(result) {
+			console.log('GarryG.ExternalAPI.ExternalApi.View.createPost', result);
+
+			// 	self.message = result.message;
+			// 	self.render();
+			});
 		}
 
 	,	getDetail: function(e) {
@@ -89,7 +106,7 @@ define('GarryG.ExternalAPI.ExternalApi.View'
 				}
 			}).done(function(result) {
 				// this.model.fetch().done(function(result) {
-			console.log('GarryG.ExternalAPI.ExternalApi.View.initialize', result);
+			console.log('GarryG.ExternalAPI.ExternalApi.View.getDetail', result);
 
 			// 	self.message = result.message;
 			// 	self.render();
