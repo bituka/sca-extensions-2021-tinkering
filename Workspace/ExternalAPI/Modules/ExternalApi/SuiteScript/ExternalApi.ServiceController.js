@@ -71,8 +71,13 @@ define("GarryG.ExternalAPI.ExternalApi.ServiceController"
     },
 
     post: function post() {
-      // not implemented
-      return 'this.request: ' + JSON.stringify(this.data);
+
+      var response = {
+        request: this.request,
+        data: this.data
+      }
+
+      return response;
     },
 
     put: function put() {

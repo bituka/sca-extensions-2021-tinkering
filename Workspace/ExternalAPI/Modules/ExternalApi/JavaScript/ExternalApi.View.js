@@ -83,7 +83,7 @@ define('GarryG.ExternalAPI.ExternalApi.View'
 
 	,	createPost: function(e) {
 			e.preventDefault();
-			console.log('GarryG.ExternalAPI.ExternalApi.View.createPost', e);
+			// console.log('GarryG.ExternalAPI.ExternalApi.View.createPost', e);
 
 			this.model.save({
 				title: 'foo',
@@ -91,7 +91,7 @@ define('GarryG.ExternalAPI.ExternalApi.View'
 				userId: 1,
 			}).done(function(result) {
 				// this.model.fetch().done(function(result) {
-			console.log('GarryG.ExternalAPI.ExternalApi.View.createPost', result);
+			console.log('GarryG.ExternalAPI.ExternalApi.View.createPost result', result);
 
 			// 	self.message = result.message;
 			// 	self.render();

@@ -1,0 +1,4 @@
+<manifest projecttype="ACCOUNTCUSTOMIZATION">
+  <projectname>external api experiment</projectname>
+  <frameworkversion>1.0</frameworkversion>
+</manifest>
